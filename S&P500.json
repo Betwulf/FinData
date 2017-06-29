@@ -1,0 +1,2560 @@
+{
+  "universeName": "S&P500",
+  "constituents": [
+    {
+      "ticker": "SCTY",
+      "description": "SolarCity Corporation",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "CYS",
+      "description": "CYS Investments, Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "LL",
+      "description": "Lumber Liquidators Holdings, Inc.",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "TSLA",
+      "description": "Tesla Motors, Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "BPT",
+      "description": "BP Prudhoe Bay Royalty Trust",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "SPY",
+      "description": "Spider SNP 500 ETF",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MMM",
+      "description": "3M|3M Company",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ABT",
+      "description": "Abbott Laboratories",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ABBV",
+      "description": "AbbVie",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ACN",
+      "description": "Accenture plc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ACE",
+      "description": "ACE Limited",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "ATVI",
+      "description": "Activision Blizzard",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ADBE",
+      "description": "Adobe Systems Inc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ADT",
+      "description": "ADT Corp",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "AAP",
+      "description": "Advance Auto Parts",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "AES",
+      "description": "AES Corp",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "AET",
+      "description": "Aetna Inc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "AFL",
+      "description": "AFLAC Inc",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "AMG",
+      "description": "Affiliated Managers Group Inc",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "A",
+      "description": "Agilent Technologies Inc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "GAS",
+      "description": "AGL Resources Inc.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "APD",
+      "description": "Air Products & Chemicals Inc",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "ARG",
+      "description": "Airgas Inc",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "AKAM",
+      "description": "Akamai Technologies Inc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "AA",
+      "description": "Alcoa Inc",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "AGN",
+      "description": "Allergan|Allergan plc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ALXN",
+      "description": "Alexion Pharmaceuticals",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ALLE",
+      "description": "Allegion",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ADS",
+      "description": "Alliance Data Systems",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ALL",
+      "description": "Allstate Corp",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "GOOGL",
+      "description": "Alphabet Inc Class A",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "GOOG",
+      "description": "Alphabet Inc Class C",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "MO",
+      "description": "Altria Group Inc",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "AMZN",
+      "description": "Amazon.com Inc",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "AEE",
+      "description": "Ameren Corp",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "AAL",
+      "description": "American Airlines Group",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "AEP",
+      "description": "American Electric Power",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "AXP",
+      "description": "American Express Co",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "AIG",
+      "description": "American International Group|American International Group, Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "AMT",
+      "description": "American Tower Corp A",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "AMP",
+      "description": "Ameriprise Financial",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "ABC",
+      "description": "AmerisourceBergen Corp",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "AME",
+      "description": "Ametek",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "AMGN",
+      "description": "Amgen Inc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "APH",
+      "description": "Amphenol Corp A",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "APC",
+      "description": "Anadarko Petroleum|Anadarko Petroleum Corp",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "ADI",
+      "description": "Analog Devices|Analog Devices, Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "AON",
+      "description": "Aon plc",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "APA",
+      "description": "Apache Corporation",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "AIV",
+      "description": "Apartment Investment & Mgmt",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "AAPL",
+      "description": "Apple Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "AMAT",
+      "description": "Applied Materials Inc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ADM",
+      "description": "Archer-Daniels-Midland Co",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "AIZ",
+      "description": "Assurant Inc",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "T",
+      "description": "AT&T Inc",
+      "sector": "Telecommunications Services"
+    },
+    {
+      "ticker": "ADSK",
+      "description": "Autodesk Inc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ADP",
+      "description": "Automatic Data Processing",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "AN",
+      "description": "AutoNation Inc",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "AZO",
+      "description": "AutoZone Inc",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "AVGO",
+      "description": "Avago Technologies",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "AVB",
+      "description": "AvalonBay Communities, Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "AVY",
+      "description": "Avery Dennison Corp",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "BHI",
+      "description": "Baker Hughes Inc",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "BLL",
+      "description": "Ball Corp",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "BAC",
+      "description": "Bank of America Corp",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BK",
+      "description": "The Bank of New York Mellon Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BCR",
+      "description": "Bard (C.R.) Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BXLT",
+      "description": "Baxalta",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BAX",
+      "description": "Baxter International Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BBT",
+      "description": "BB&T Corporation",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BDX",
+      "description": "Becton Dickinson",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BBBY",
+      "description": "Bed Bath & Beyond",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "BRK-B",
+      "description": "Berkshire Hathaway",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BBY",
+      "description": "Best Buy Co. Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "BIIB",
+      "description": "BIOGEN IDEC Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BLK",
+      "description": "BlackRock",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "HRB",
+      "description": "Block H&R",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BA",
+      "description": "Boeing Company",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "BWA",
+      "description": "BorgWarner",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "BXP",
+      "description": "Boston Properties",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BSX",
+      "description": "Boston Scientific",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BMY",
+      "description": "Bristol-Myers Squibb",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BRCM",
+      "description": "Broadcom Corporation",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "BF-B",
+      "description": "Brown-Forman Corporation",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CHRW",
+      "description": "C. H. Robinson Worldwide",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CA",
+      "description": "CA, Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "CVC",
+      "description": "Cablevision|Cablevision Systems Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "COG",
+      "description": "Cabot Oil & Gas",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "CAM",
+      "description": "Cameron International Corp.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "CPB",
+      "description": "Campbell Soup",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "COF",
+      "description": "Capital One Financial",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CAH",
+      "description": "Cardinal Health Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "HSIC",
+      "description": "Henry Schein",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "KMX",
+      "description": "Carmax Inc",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "CCL",
+      "description": "Carnival Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "CAT",
+      "description": "Caterpillar Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CBG",
+      "description": "CBRE Group",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CBS",
+      "description": "CBS Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "CELG",
+      "description": "Celgene Corp.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "CNP",
+      "description": "CenterPoint Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "CTL",
+      "description": "CenturyLink Inc",
+      "sector": "Telecommunications Services"
+    },
+    {
+      "ticker": "CERN",
+      "description": "Cerner",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "CF",
+      "description": "CF Industries Holdings Inc",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "SCHW",
+      "description": "Charles Schwab Corporation",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CHK",
+      "description": "Chesapeake Energy",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "CVX",
+      "description": "Chevron Corp.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "CMG",
+      "description": "Chipotle Mexican Grill",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "CB",
+      "description": "Chubb Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CHD",
+      "description": "Church & Dwight",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CI",
+      "description": "CIGNA Corp.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "XEC",
+      "description": "Cimarex Energy",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "CINF",
+      "description": "Cincinnati Financial",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CTAS",
+      "description": "Cintas Corporation",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CSCO",
+      "description": "Cisco Systems",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "C",
+      "description": "Citigroup Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CTXS",
+      "description": "Citrix Systems",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "CLX",
+      "description": "The Clorox Company",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CME",
+      "description": "CME Group Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CMS",
+      "description": "CMS Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "COH",
+      "description": "Coach Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "KO",
+      "description": "The Coca Cola Company",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CCE",
+      "description": "Coca-Cola Enterprises",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CTSH",
+      "description": "Cognizant Technology Solutions",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "CL",
+      "description": "Colgate-Palmolive",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CPGX",
+      "description": "Columbia Pipeline Group Inc",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "CMCSA",
+      "description": "Comcast A Corp",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "CMA",
+      "description": "Comerica Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CAG",
+      "description": "ConAgra Foods Inc.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "COP",
+      "description": "ConocoPhillips",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "CNX",
+      "description": "CONSOL Energy Inc.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "ED",
+      "description": "Consolidated Edison",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "STZ",
+      "description": "Constellation Brands",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "GLW",
+      "description": "Corning Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "COST",
+      "description": "Costco Co.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CCI",
+      "description": "Crown Castle International Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CSRA",
+      "description": "CSRA Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "CSX",
+      "description": "CSX Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CMI",
+      "description": "Cummins Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CVS",
+      "description": "CVS Caremark Corp.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "DHI",
+      "description": "D. R. Horton",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "DHR",
+      "description": "Danaher Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "DRI",
+      "description": "Darden Restaurants",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "DVA",
+      "description": "DaVita Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "DE",
+      "description": "Deere & Co.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "DLPH",
+      "description": "Delphi Automotive",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "DAL",
+      "description": "Delta Air Lines",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "XRAY",
+      "description": "Dentsply International",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "DVN",
+      "description": "Devon Energy Corp.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "DO",
+      "description": "Diamond Offshore Drilling",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "DFS",
+      "description": "Discover Financial|Discover Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "DISCA",
+      "description": "Discovery Communications-A",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "DISCK",
+      "description": "Discovery Communications-C",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "DG",
+      "description": "Dollar General",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "DLTR",
+      "description": "Dollar Tree",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "D",
+      "description": "Dominion Resources",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "DOV",
+      "description": "Dover Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "DOW",
+      "description": "Dow Chemical",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "DPS",
+      "description": "Dr Pepper Snapple Group",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "DTE",
+      "description": "DTE Energy Co.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "DD",
+      "description": "Du Pont (E.I.)",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "DUK",
+      "description": "Duke Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "DNB",
+      "description": "Dun & Bradstreet",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ETFC",
+      "description": "E*Trade",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "EMN",
+      "description": "Eastman Chemical",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "ETN",
+      "description": "Eaton Corporation",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "EBAY",
+      "description": "eBay Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ECL",
+      "description": "Ecolab Inc.",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "EIX",
+      "description": "Edison Int'l",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "EW",
+      "description": "Edwards Lifesciences",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "EA",
+      "description": "Electronic Arts",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "EMC",
+      "description": "EMC Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "EMR",
+      "description": "Emerson Electric Company",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ENDP",
+      "description": "Endo International",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ESV",
+      "description": "Ensco plc",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "ETR",
+      "description": "Entergy Corp.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "EOG",
+      "description": "EOG Resources",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "EQT",
+      "description": "EQT Corporation",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "EFX",
+      "description": "Equifax Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "EQIX",
+      "description": "Equinix",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "EQR",
+      "description": "Equity Residential",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "ESS",
+      "description": "Essex Property Trust Inc",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "EL",
+      "description": "Estee Lauder Cos.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "ES",
+      "description": "Eversource Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "EXC",
+      "description": "Exelon Corp.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "EXPE",
+      "description": "Expedia Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "EXPD",
+      "description": "Expeditors Int'l",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ESRX",
+      "description": "Express Scripts",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "XOM",
+      "description": "Exxon Mobil Corp.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "FFIV",
+      "description": "F5 Networks",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "FB",
+      "description": "Facebook",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "FAST",
+      "description": "Fastenal Co",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "FDX",
+      "description": "FedEx Corporation",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "FIS",
+      "description": "Fidelity National Information Services",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "FITB",
+      "description": "Fifth Third Bancorp",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "FSLR",
+      "description": "First Solar Inc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "FE",
+      "description": "FirstEnergy Corp",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "FISV",
+      "description": "Fiserv Inc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "FLIR",
+      "description": "FLIR Systems",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "FLS",
+      "description": "Flowserve Corporation",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "FLR",
+      "description": "Fluor Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "FMC",
+      "description": "FMC Corporation",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "FTI",
+      "description": "FMC Technologies Inc.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "F",
+      "description": "Ford Motor",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "FOSL",
+      "description": "Fossil, Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "BEN",
+      "description": "Franklin Resources",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "FCX",
+      "description": "Freeport-McMoran Cp & Gld",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "FTR",
+      "description": "Frontier Communications",
+      "sector": "Telecommunications Services"
+    },
+    {
+      "ticker": "GME",
+      "description": "GameStop Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "GPS",
+      "description": "Gap (The)",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "GRMN",
+      "description": "Garmin Ltd.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "GD",
+      "description": "General Dynamics",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "GE",
+      "description": "General Electric",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "GGP",
+      "description": "General Growth Properties Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "GIS",
+      "description": "General Mills",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "GM",
+      "description": "General Motors",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "GPC",
+      "description": "Genuine Parts",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "GILD",
+      "description": "Gilead Sciences",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "GS",
+      "description": "Goldman Sachs Group",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "GT",
+      "description": "Goodyear Tire & Rubber",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "GWW",
+      "description": "Grainger (W.W.) Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "HAL",
+      "description": "Halliburton Co.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "HBI",
+      "description": "Hanesbrands Inc",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "HOG",
+      "description": "Harley-Davidson",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "HAR",
+      "description": "Harman Int'l Industries",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "HRS",
+      "description": "Harris Corporation",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "HIG",
+      "description": "Hartford Financial Svc.Gp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "HAS",
+      "description": "Hasbro Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "HCA",
+      "description": "HCA Holdings",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "HCP",
+      "description": "HCP Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "HP",
+      "description": "Helmerich & Payne",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "HES",
+      "description": "Hess Corporation",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "HPE",
+      "description": "Hewlett Packard Enterprise",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "HD",
+      "description": "Home Depot",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "HON",
+      "description": "Honeywell Int'l Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "HRL",
+      "description": "Hormel Foods Corp.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "HST",
+      "description": "Host Hotels & Resorts",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "HPQ",
+      "description": "HP Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "HUM",
+      "description": "Humana Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "HBAN",
+      "description": "Huntington Bancshares",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "ITW",
+      "description": "Illinois Tool Works",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ILMN",
+      "description": "Illumina (company)|Illumina Inc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "IR",
+      "description": "Ingersoll-Rand PLC",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "INTC",
+      "description": "Intel Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ICE",
+      "description": "Intercontinental Exchange",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "IBM",
+      "description": "IBM|International Bus. Machines",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "IP",
+      "description": "International Paper",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "IPG",
+      "description": "Interpublic Group",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "IFF",
+      "description": "Intl Flavors & Fragrances",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "INTU",
+      "description": "Intuit Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ISRG",
+      "description": "Intuitive Surgical Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "IVZ",
+      "description": "Invesco Ltd.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "IRM",
+      "description": "Iron Mountain Incorporated",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "JEC",
+      "description": "Jacobs Engineering Group",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "JBHT",
+      "description": "J. B. Hunt Transport Services",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "JNJ",
+      "description": "Johnson & Johnson",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "JCI",
+      "description": "Johnson Controls",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "JPM",
+      "description": "JPMorgan Chase & Co.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "JNPR",
+      "description": "Juniper Networks",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "KSU",
+      "description": "Kansas City Southern",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "K",
+      "description": "Kellogg Co.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "KEY",
+      "description": "KeyCorp",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "GMCR",
+      "description": "Keurig Green Mountain",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "KMB",
+      "description": "Kimberly-Clark",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "KIM",
+      "description": "Kimco Realty",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "KMI",
+      "description": "Kinder Morgan",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "KLAC",
+      "description": "KLA-Tencor Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "KSS",
+      "description": "Kohl's Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "KHC",
+      "description": "Kraft Heinz|Kraft Heinz Co",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "KR",
+      "description": "Kroger Co.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "LB",
+      "description": "L Brands Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "LLL",
+      "description": "L-3 Communications Holdings",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "LH",
+      "description": "Laboratory Corp. of America Holding",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "LRCX",
+      "description": "Lam Research",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "LM",
+      "description": "Legg Mason",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "LEG",
+      "description": "Leggett & Platt",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "LEN",
+      "description": "Lennar Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "LVLT",
+      "description": "Level 3 Communications",
+      "sector": "Telecommunications Services"
+    },
+    {
+      "ticker": "LUK",
+      "description": "Leucadia National Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "LLY",
+      "description": "Lilly (Eli) & Co.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "LNC",
+      "description": "Lincoln National",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "LLTC",
+      "description": "Linear Technology Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "LMT",
+      "description": "Lockheed Martin Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "L",
+      "description": "Loews Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "LOW",
+      "description": "Lowe's Cos.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "LYB",
+      "description": "LyondellBasell",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "MTB",
+      "description": "M&T Bank Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MAC",
+      "description": "Macerich",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "M",
+      "description": "Macy's Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MNK",
+      "description": "Mallinckrodt Plc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "MRO",
+      "description": "Marathon Oil Corp.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "MPC",
+      "description": "Marathon Petroleum",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "MAR",
+      "description": "Marriott Int'l.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MMC",
+      "description": "Marsh & McLennan",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MLM",
+      "description": "Martin Marietta Materials",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "MAS",
+      "description": "Masco Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "MA",
+      "description": "Mastercard Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "MAT",
+      "description": "Mattel Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MKC",
+      "description": "McCormick & Co.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "MCD",
+      "description": "McDonald's Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MHFI",
+      "description": "McGraw Hill Financial",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MCK",
+      "description": "McKesson Corp.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "MJN",
+      "description": "Mead Johnson",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "WRK",
+      "description": "Westrock Co",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "MDT",
+      "description": "Medtronic plc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "MRK",
+      "description": "Merck & Co.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "MET",
+      "description": "MetLife Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "KORS",
+      "description": "Michael Kors Holdings",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MCHP",
+      "description": "Microchip Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "MU",
+      "description": "Micron Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "MSFT",
+      "description": "Microsoft Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "MHK",
+      "description": "Mohawk Industries",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TAP",
+      "description": "Molson Coors Brewing Company",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "MDLZ",
+      "description": "Mondelez|Mondelez International",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "MON",
+      "description": "Monsanto Co.",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "MNST",
+      "description": "Monster Beverage",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "MCO",
+      "description": "Moody's Corp",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MS",
+      "description": "Morgan Stanley",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MOS",
+      "description": "The Mosaic Company",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "MSI",
+      "description": "Motorola Solutions Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "MUR",
+      "description": "Murphy Oil",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "MYL",
+      "description": "Mylan N.V.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "NDAQ",
+      "description": "NASDAQ OMX Group",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "NOV",
+      "description": "National Oilwell Varco Inc.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "NAVI",
+      "description": "Navient",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "NTAP",
+      "description": "NetApp",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "NFLX",
+      "description": "Netflix Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "NWL",
+      "description": "Newell Rubbermaid Co.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "NFX",
+      "description": "Newfield Exploration Co",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "NEM",
+      "description": "Newmont Mining Corp. (Hldg. Co.)",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "NWSA",
+      "description": "News Corp. Class A",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "NWS",
+      "description": "News Corp. Class B",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "NEE",
+      "description": "NextEra Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "NLSN",
+      "description": "Nielsen Holdings",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "NKE",
+      "description": "Nike (company)|Nike",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "NI",
+      "description": "NiSource Inc.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "NBL",
+      "description": "Noble Energy Inc",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "JWN",
+      "description": "Nordstrom",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "NSC",
+      "description": "Norfolk Southern Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "NTRS",
+      "description": "Northern Trust Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "NOC",
+      "description": "Northrop Grumman Corp.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "NRG",
+      "description": "NRG Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "NUE",
+      "description": "Nucor Corp.",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "NVDA",
+      "description": "Nvidia Corporation",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "ORLY",
+      "description": "O'Reilly Automotive",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "OXY",
+      "description": "Occidental Petroleum",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "OMC",
+      "description": "Omnicom Group",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "OKE",
+      "description": "ONEOK",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "ORCL",
+      "description": "Oracle Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "OI",
+      "description": "Owens-Illinois Inc",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "PCAR",
+      "description": "PACCAR Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "PH",
+      "description": "Parker-Hannifin",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "PDCO",
+      "description": "Patterson Companies",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "PAYX",
+      "description": "Paychex Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "PYPL",
+      "description": "PayPal",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "PNR",
+      "description": "Pentair|Pentair Ltd.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "PBCT",
+      "description": "People's United Financial",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "POM",
+      "description": "Pepco Holdings Inc.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "PEP",
+      "description": "PepsiCo Inc.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "PKI",
+      "description": "PerkinElmer",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "PRGO",
+      "description": "Perrigo",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "PFE",
+      "description": "Pfizer Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "PCG",
+      "description": "PG&E Corp.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "PM",
+      "description": "Philip Morris International",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "PSX",
+      "description": "Phillips 66",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "PNW",
+      "description": "Pinnacle West Capital",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "PXD",
+      "description": "Pioneer Natural Resources",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "PBI",
+      "description": "Pitney-Bowes",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "PCL",
+      "description": "Plum Creek Timber Co.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "PNC",
+      "description": "PNC Financial Services",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "RL",
+      "description": "Polo Ralph Lauren Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "PPG",
+      "description": "PPG Industries",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "PPL",
+      "description": "PPL Corp.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "PX",
+      "description": "Praxair Inc.",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "PCP",
+      "description": "Precision Castparts",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "PCLN",
+      "description": "Priceline.com Inc",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "PFG",
+      "description": "Principal Financial Group",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "PG",
+      "description": "Procter & Gamble",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "PGR",
+      "description": "Progressive Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "PLD",
+      "description": "Prologis",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "PRU",
+      "description": "Prudential Financial",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "PEG",
+      "description": "Public Serv. Enterprise Inc.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "PSA",
+      "description": "Public Storage",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "PHM",
+      "description": "Pulte Homes Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "PVH",
+      "description": "PVH Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "QRVO",
+      "description": "Qorvo",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "PWR",
+      "description": "Quanta Services Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "QCOM",
+      "description": "QUALCOMM Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "DGX",
+      "description": "Quest Diagnostics",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "RRC",
+      "description": "Range Resources|Range Resources Corp.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "RTN",
+      "description": "Raytheon Co.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "O",
+      "description": "Realty Income Corporation",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "RHT",
+      "description": "Red Hat Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "REGN",
+      "description": "Regeneron",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "RF",
+      "description": "Regions Financial Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "RSG",
+      "description": "Republic Services Inc",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "RAI",
+      "description": "Reynolds American Inc.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "RHI",
+      "description": "Robert Half International",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ROK",
+      "description": "Rockwell Automation Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "COL",
+      "description": "Rockwell Collins",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ROP",
+      "description": "Roper Industries",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ROST",
+      "description": "Ross Stores",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "RCL",
+      "description": "Royal Caribbean Cruises Ltd",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "R",
+      "description": "Ryder System",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CRM",
+      "description": "Salesforce.com",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "SNDK",
+      "description": "SanDisk Corporation",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "SCG",
+      "description": "SCANA Corp",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "SLB",
+      "description": "Schlumberger Ltd.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "SNI",
+      "description": "Scripps Networks Interactive Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "STX",
+      "description": "Seagate Technology",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "SEE",
+      "description": "Sealed Air Corp.(New)",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "SRE",
+      "description": "Sempra Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "SHW",
+      "description": "Sherwin-Williams",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "SIG",
+      "description": "Signet Jewelers",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "SPG",
+      "description": "Simon Property Group Inc",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "SWKS",
+      "description": "Skyworks Solutions",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "SLG",
+      "description": "SL Green Realty",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "SJM",
+      "description": "Smucker (J.M.)",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "SNA",
+      "description": "Snap-On Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "SO",
+      "description": "Southern Co.",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "LUV",
+      "description": "Southwest Airlines",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "SWN",
+      "description": "Southwestern Energy",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "SE",
+      "description": "Spectra Energy Corp.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "STJ",
+      "description": "St Jude Medical",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "SWK",
+      "description": "Stanley Black & Decker",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "SPLS",
+      "description": "Staples Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "SBUX",
+      "description": "Starbucks Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "HOT",
+      "description": "Starwood Hotels & Resorts",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "STT",
+      "description": "State Street Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "SRCL",
+      "description": "Stericycle Inc",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "SYK",
+      "description": "Stryker Corp.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "STI",
+      "description": "SunTrust Banks",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "SYMC",
+      "description": "Symantec Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "SYF",
+      "description": "Synchrony Financial",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "SYY",
+      "description": "Sysco Corp.",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "TROW",
+      "description": "T. Rowe Price Group",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "TGT",
+      "description": "Target Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TEL",
+      "description": "TE Connectivity|TE Connectivity Ltd.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "TE",
+      "description": "TECO Energy",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "TGNA",
+      "description": "Gannett Co.|Tegna",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "THC",
+      "description": "Tenet Healthcare Corp.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "TDC",
+      "description": "Teradata Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "TSO",
+      "description": "Tesoro Petroleum Co.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "TXN",
+      "description": "Texas Instruments",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "TXT",
+      "description": "Textron Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "HSY",
+      "description": "The Hershey Company",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "TRV",
+      "description": "The Travelers Companies Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "TMO",
+      "description": "Thermo Fisher Scientific",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "TIF",
+      "description": "Tiffany & Co.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TWX",
+      "description": "Time Warner Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TWC",
+      "description": "Time Warner Cable Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TJX",
+      "description": "TJX Companies Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TMK",
+      "description": "Torchmark Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "TSS",
+      "description": "Total System Services",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "TSCO",
+      "description": "Tractor Supply Company",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "RIG",
+      "description": "Transocean",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "TRIP",
+      "description": "TripAdvisor",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "FOXA",
+      "description": "Twenty-First Century Fox Class A",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "FOX",
+      "description": "Twenty-First Century Fox Class B",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TSN",
+      "description": "Tyson Foods",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "TYC",
+      "description": "Tyco International",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "USB",
+      "description": "U.S. Bancorp",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "UA",
+      "description": "Under Armour",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "UNP",
+      "description": "Union Pacific",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "UAL",
+      "description": "United Continental Holdings",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "UNH",
+      "description": "United Health Group Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "UPS",
+      "description": "United Parcel Service",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "URI",
+      "description": "United Rentals|United Rentals, Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "UTX",
+      "description": "United Technologies",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "UHS",
+      "description": "Universal Health Services|Universal Health Services, Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "UNM",
+      "description": "Unum Group",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "URBN",
+      "description": "Urban Outfitters",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "VFC",
+      "description": "V.F. Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "VLO",
+      "description": "Valero Energy",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "VAR",
+      "description": "Varian Medical Systems",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "VTR",
+      "description": "Ventas Inc",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "VRSN",
+      "description": "Verisign Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "VRSK",
+      "description": "Verisk Analytics",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "VZ",
+      "description": "Verizon Communications",
+      "sector": "Telecommunications Services"
+    },
+    {
+      "ticker": "VRTX",
+      "description": "Vertex Pharmaceuticals|Vertex Pharmaceuticals Inc",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "VIAB",
+      "description": "Viacom Inc.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "V",
+      "description": "Visa Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "VNO",
+      "description": "Vornado Realty Trust",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "VMC",
+      "description": "Vulcan Materials",
+      "sector": "Materials"
+    },
+    {
+      "ticker": "WMT",
+      "description": "Wal-Mart Stores",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "WBA",
+      "description": "Walgreens Boots Alliance",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "DIS",
+      "description": "The Walt Disney Company",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "WM",
+      "description": "Waste Management Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "WAT",
+      "description": "Waters Corporation",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ANTM",
+      "description": "Anthem Inc.",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "WFC",
+      "description": "Wells Fargo",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "HCN",
+      "description": "Welltower Inc.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "WDC",
+      "description": "Western Digital",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "WU",
+      "description": "Western Union Co",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "WY",
+      "description": "Weyerhaeuser Corp.",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "WHR",
+      "description": "Whirlpool Corp.",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "WFM",
+      "description": "Whole Foods Market",
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "WMB",
+      "description": "Williams Cos.",
+      "sector": "Energy"
+    },
+    {
+      "ticker": "WEC",
+      "description": "Wisconsin Energy Corporation",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "WYN",
+      "description": "Wyndham Worldwide",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "WYNN",
+      "description": "Wynn Resorts Ltd",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "XEL",
+      "description": "Xcel Energy Inc",
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "XRX",
+      "description": "Xerox Corp.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "XLNX",
+      "description": "Xilinx Inc",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "XL",
+      "description": "XL Capital",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "XYL",
+      "description": "Xylem Inc.",
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "YHOO",
+      "description": "Yahoo Inc.",
+      "sector": "Information Technology"
+    },
+    {
+      "ticker": "YUM",
+      "description": "Yum! Brands Inc",
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "ZBH",
+      "description": "Zimmer Holdings|Zimmer Biomet Holdings",
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ZION",
+      "description": "Zions Bancorp",
+      "sector": "Financials"
+    },
+    {
+      "ticker": "ZTS",
+      "description": "Zoetis",
+      "sector": "Health Care"
+    }
+  ],
+  "id": "S&P500",
+  "_rid": null,
+  "_self": null,
+  "_ts": 0,
+  "_etag": null
+}
