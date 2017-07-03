@@ -160,7 +160,7 @@ def _any_ticker_files(ticker):
 
 if __name__ == '__main__':
     # create_universe_from_json()
-    update_all_price_caches()
+    # update_all_price_caches()
 
     # data = get_ticker_prices()
     data = get_all_prices()
