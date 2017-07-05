@@ -107,7 +107,7 @@ def get_all_prices():
             return all_data
     print('Reading raw price files...')
     for file_found in file_list:
-        if file_found != _price_path + _combined_price_filename:
+        if (file_found != _price_path + _combined_price_filename) & file_found.endswith('.json'):
             with open(file_found, 'rt') as f:
                 current_data = pd.read_json(f)
                 ttl_data = pd.concat([current_data, ttl_data])
@@ -119,13 +119,15 @@ def get_all_prices():
 
     with open(_price_path + _combined_price_filename, 'wt') as f:
         f.write(ttl_data.to_json())
+    with open(_price_path + "__all.csv", 'wt') as f:
+        f.write(ttl_data.to_csv())
     return ttl_data
 
 
-def _create_filename(ticker, year, month):
+def _create_filename(ticker, year, month, extension=".json"):
     # ticker may have odd symbols that cannot be in a filename like a forward slash
     ticker = ticker.replace('/', '+')
-    return _price_path + ticker + ".%04d.%02d.json" % (year, month)
+    return (_price_path + ticker + ".{:04d}.{:02d}" + extension).format(year, month)
 
 
 def _parse_filename(filename):
@@ -160,9 +162,7 @@ def _any_ticker_files(ticker):
 
 if __name__ == '__main__':
     # create_universe_from_json()
-    # update_all_price_caches()
-
-    # data = get_ticker_prices()
+    update_all_price_caches()
     data = get_all_prices()
     print('Total number of rows: {}'.format(len(data)))
     print('Got data for the following tickers:')
