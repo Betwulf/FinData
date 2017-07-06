@@ -1,3 +1,4 @@
+import sys
 import os
 import datetime
 import calendar
@@ -46,9 +47,9 @@ def _get_tickerlist():
     snp_list = []
     with open(_data_path + 'universe.txt', 'rt', encoding='utf-8') as f:
         snp_list = [x.strip('\n') for x in f]
-    print("Got tickers... Top 6: ")
-    print(snp_list[:6])
-    return snp_list[:6]
+    print("Got tickers... Top 10: ")
+    print(snp_list[:10])
+    return snp_list[:10]
 
 
 def update_price_cache(ticker):
@@ -117,10 +118,11 @@ def get_all_prices():
     ttl_data.sort_values('date', inplace=True)
     ttl_data.reset_index(drop=True, inplace=True)
 
-    with open(_price_path + _combined_price_filename, 'wt') as f:
-        f.write(ttl_data.to_json())
+    # CSV for debugging use only
     with open(_price_path + "__all.csv", 'wt') as f:
         f.write(ttl_data.to_csv())
+    with open(_price_path + _combined_price_filename, 'wt') as f:
+        f.write(ttl_data.to_json())
     return ttl_data
 
 
@@ -150,7 +152,7 @@ def _any_ticker_files(ticker):
     last_date = datetime.date(1900, 1, 1)
     old_date = last_date
     for file_found in os.listdir(_price_path):
-        if file_found.find(_combined_price_filename) == -1:
+        if (file_found.find(_combined_price_filename) == -1) & file_found.endswith('.json'):
             file_ticker, file_year, file_month = _parse_filename(file_found)
             if file_ticker == ticker:
                 file_date = datetime.date(file_year, file_month, 1)
@@ -162,6 +164,13 @@ def _any_ticker_files(ticker):
 
 if __name__ == '__main__':
     # create_universe_from_json()
+    api_key = ""
+    if len(sys.argv) > 1:
+        api_key = sys.argv[1]
+    else:
+        print("Please paste in your quandl api key:")
+        api_key = sys.stdin.readline().replace('\n', '')
+    quandl.ApiConfig.api_key = api_key
     update_all_price_caches()
     data = get_all_prices()
     print('Total number of rows: {}'.format(len(data)))

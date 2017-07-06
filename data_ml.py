@@ -1,12 +1,12 @@
 import os
-import datetime
-import calendar
 import pandas as pd
 import numpy as np
 import data_universe as du
+from utils import timing
 
 _label_dir = "\\data\\label\\"
 _calced_dir = "\\data\\calced\\"
+_calced_combined_filename = "__all.json"
 _cwd = os.getcwd()
 _calced_path = _cwd + _calced_dir
 _label_path = _cwd + _label_dir
@@ -17,13 +17,18 @@ _forecast_slope = 0.3  # the steep climb from 0 to 1 as x approaches the thresho
 
 
 def adjusted_double_sigmoid(x, target_value, slope):
+    """ This function creates a 2 step smooth transition. Where x = -target_value, y = -1, then as x goes to 0
+    y is zero, and as x approaches target_value, y approaches 1.
+    Slope controls how quick the transitions are. """
+    if x < -50:
+        x = -50  # prevents overflow in exp.
     # return 2*(1/(1 + np.exp((-4/adjust)*x))) - 1
-    return (1 / (1 + np.exp((-4 / slope) * (x - target_value)))) + \
-           (1 / (1 + np.exp((-4 / slope) * (x + target_value)))) - 1
+    return (1 / (1 + np.exp((-4.0 / slope) * (x - target_value)))) + \
+           (1 / (1 + np.exp((-4.0 / slope) * (x + target_value)))) - 1
 
 
 def ticker_data():
-    """ Iterator to get the next ticker and corresponding dataframe """
+    """ Iterator to get the next ticker and its corresponding data_frame of prices """
     if not os.path.exists(_calced_path):
         os.makedirs(_calced_path)
 
@@ -46,7 +51,55 @@ def ticker_data():
         yield ticker, sub_df
 
 
+@timing
+def _get_aggregated_data(a_path):
+    ttl_data = pd.DataFrame()
+    file_list = [a_path + a_file for a_file in os.listdir(a_path)]
+    latest_file = max(file_list, key=os.path.getctime)
+    print('latest file found: {}'.format(latest_file))
+    if latest_file.find(_calced_combined_filename) > -1:
+        print('Reading cached file: {}'.format(_calced_combined_filename))
+        with open(a_path + _calced_combined_filename, 'rt') as f:
+            all_data = pd.read_json(f)
+            return all_data
+    print('Reading raw price files...')
+    for file_found in file_list:
+        if (file_found != a_path + _calced_combined_filename) & file_found.endswith('.json'):
+            with open(file_found, 'rt') as f:
+                current_data = pd.read_json(f)
+                ttl_data = pd.concat([current_data, ttl_data])
+
+    # process munged data
+    ttl_data.reset_index(drop=True, inplace=True)
+
+    # CSV for debugging use only
+    # with open(a_path + "__all.csv", 'wt') as f:
+    #     f.write(ttl_data.to_csv())
+    with open(a_path + _calced_combined_filename, 'wt') as f:
+        f.write(ttl_data.to_json())
+    return ttl_data
+
+
+def get_all_feature_data():
+    """ Returns a dataframe with all calculated data for ml to consume """
+    return _get_aggregated_data(_calced_path)
+
+
+def get_all_label_data():
+    """ Returns a dataframe with all label data for ml to consume """
+    return _get_aggregated_data(_label_path)
+
+
+def get_all_ml_data():
+    df_feature = get_all_feature_data()
+    df_label = get_all_label_data()
+    df_merged = pd.merge(df_feature, df_label, how='inner', on=['date', 'ticker'])
+    df_merged.sort_values('date', inplace=True)
+    df_merged.reset_index(drop=True, inplace=True)
+    return df_merged
+
 def calc_training_data():
+    """ Generates ml label data by calculating future returns off of daily prices """
     # for each ticker, sort and process label data for ml training
     for ticker, sub_df in ticker_data():
         if len(sub_df) < _forecast_days:
@@ -63,13 +116,14 @@ def calc_training_data():
                 label = adjusted_double_sigmoid(future_return, _forecast_threshold, _forecast_slope)
                 label_row_values = [ticker, curr_date, label, future_return]
                 new_df.loc[i] = label_row_values
-            with open(_label_path + _get_calc_filename(ticker, curr_date), 'wt') as f:
-                f.write(new_df.to_json())
-            with open(_label_path + _get_calc_filename(ticker, curr_date, extension='.csv'), 'wt') as f:
+            with open(_label_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
                 f.write(new_df.to_csv())
+            with open(_label_path + _get_calc_filename(ticker), 'wt') as f:
+                f.write(new_df.to_json())
 
 
 def calc_ml_data():
+    """ Generates ml data by calculating specific values off of daily prices """
     # for each ticker, sort and process calculated data for ml
     for ticker, sub_df in ticker_data():
 
@@ -138,34 +192,56 @@ def calc_ml_data():
                               curr_year_high_pct, curr_year_low_pct, stddev_30, stddev_60]
                 new_df.loc[i] = new_values
 
-            with open(_calced_path + _get_calc_filename(ticker, curr_date), 'wt') as f:
+            with open(_calced_path + _get_calc_filename(ticker), 'wt') as f:
                 f.write(new_df.to_json())
-            with open(_calced_path + _get_calc_filename(ticker, curr_date, extension='.csv'), 'wt') as f:
+            with open(_calced_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
                 f.write(new_df.to_csv())
 
 
-def _get_calc_filename(ticker, last_date, extension=".json"):
+def _get_calc_filename(ticker, extension=".json"):
     # ticker may have odd symbols that cannot be in a filename like a forward slash
-    if type(last_date) == str:
-        last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
     ticker = ticker.replace('/', '+')
-    return (ticker + ".{:04d}.{:02d}" + extension).format(last_date.year, last_date.month)
+    return '{}{}'.format(ticker, extension)
 
 
 def _create_training_data_frame(df_size):
-    df = pd.DataFrame(index=range(df_size), columns=('ticker', 'date', 'label', 'return'))
-    return df
+    df_label = pd.DataFrame(index=range(df_size), columns=('ticker', 'date', 'label', 'future_return'))
+    return df_label
+
+
+def get_descriptive_columns():
+    return ['ticker', 'date']
+
+
+def get_label_column():
+    return ['label']
+
+
+def get_feature_columns():
+    return ['return_daily', 'return_open', 'return_high', 'return_low',
+            'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
+            'ma_9_day', 'ma_15_day', 'ma_30_day', 'ma_60_day',
+            'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day']
 
 
 def _create_feature_data_frame(df_size):
-    df = pd.DataFrame(index=range(df_size),
-                      columns=('ticker', 'date', 'return_daily', 'return_open', 'return_high', 'return_low',
-                               'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
-                               'ma_9_day', 'ma_15_day', 'ma_30_day', 'ma_60_day',
-                               'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day'))
-    return df
+    df_features = pd.DataFrame(index=range(df_size),
+                               columns=('ticker', 'date', 'return_daily', 'return_open', 'return_high', 'return_low',
+                                        'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
+                                        'ma_9_day', 'ma_15_day', 'ma_30_day', 'ma_60_day',
+                                        'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day'))
+    return df_features
 
 
 if __name__ == '__main__':
-    # calc_ml_data()
+    calc_ml_data()
     calc_training_data()
+    df = get_all_feature_data()
+    print('FEATURE DATA {} rows.'.format(len(df)))
+    print(df.describe())
+    df = get_all_label_data()
+    print('LABEL DATA {} rows.'.format(len(df)))
+    print(df.describe())
+    df = get_all_ml_data()
+    print('COMBINED DATA {} rows.'.format(len(df)))
+    print(df.describe())
