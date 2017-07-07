@@ -99,7 +99,7 @@ def get_all_prices():
     """ This gets every single price for all securities in the universe - warning this could take some time... """
     ttl_data = pd.DataFrame()
     file_list = [_price_path + a_file for a_file in os.listdir(_price_path)]
-    latest_file = max(file_list, key=os.path.getctime)
+    latest_file = max(file_list, key=os.path.getmtime)
     print('latest file found: {}'.format(latest_file))
     if latest_file.find(_combined_price_filename) > -1:
         print('Reading cached file: {}'.format(_combined_price_filename))

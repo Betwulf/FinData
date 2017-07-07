@@ -3,10 +3,11 @@ import pandas as pd
 import numpy as np
 import data_universe as du
 from utils import timing
+import datetime
 
 _label_dir = "\\data\\label\\"
 _calced_dir = "\\data\\calced\\"
-_calced_combined_filename = "__all.json"
+_combined_filename = "special.json"
 _cwd = os.getcwd()
 _calced_path = _cwd + _calced_dir
 _label_path = _cwd + _label_dir
@@ -22,9 +23,17 @@ def adjusted_double_sigmoid(x, target_value, slope):
     Slope controls how quick the transitions are. """
     if x < -50:
         x = -50  # prevents overflow in exp.
-    # return 2*(1/(1 + np.exp((-4/adjust)*x))) - 1
     return (1 / (1 + np.exp((-4.0 / slope) * (x - target_value)))) + \
            (1 / (1 + np.exp((-4.0 / slope) * (x + target_value)))) - 1
+
+
+def sigmoid(x, target_value, slope):
+    """ This function creates a 2 step smooth transition. Where x = -target_value, y = -1, then as x goes to 0
+    y is zero, and as x approaches target_value, y approaches 1.
+    Slope controls how quick the transitions are. """
+    if x < -50:
+        x = -50  # prevents overflow in exp.
+    return 1 / (1 + np.exp((-4.0 / slope) * (x - target_value)))
 
 
 def ticker_data():
@@ -55,16 +64,16 @@ def ticker_data():
 def _get_aggregated_data(a_path):
     ttl_data = pd.DataFrame()
     file_list = [a_path + a_file for a_file in os.listdir(a_path)]
-    latest_file = max(file_list, key=os.path.getctime)
+    latest_file = max(file_list, key=os.path.getmtime)
     print('latest file found: {}'.format(latest_file))
-    if latest_file.find(_calced_combined_filename) > -1:
-        print('Reading cached file: {}'.format(_calced_combined_filename))
-        with open(a_path + _calced_combined_filename, 'rt') as f:
+    if latest_file.find(_combined_filename) > -1:
+        print('Reading cached file: {}'.format(_combined_filename))
+        with open(a_path + _combined_filename, 'rt') as f:
             all_data = pd.read_json(f)
             return all_data
     print('Reading raw price files...')
     for file_found in file_list:
-        if (file_found != a_path + _calced_combined_filename) & file_found.endswith('.json'):
+        if (file_found != a_path + _combined_filename) & file_found.endswith('.json'):
             with open(file_found, 'rt') as f:
                 current_data = pd.read_json(f)
                 ttl_data = pd.concat([current_data, ttl_data])
@@ -75,7 +84,7 @@ def _get_aggregated_data(a_path):
     # CSV for debugging use only
     # with open(a_path + "__all.csv", 'wt') as f:
     #     f.write(ttl_data.to_csv())
-    with open(a_path + _calced_combined_filename, 'wt') as f:
+    with open(a_path + _combined_filename, 'wt') as f:
         f.write(ttl_data.to_json())
     return ttl_data
 
@@ -98,6 +107,7 @@ def get_all_ml_data():
     df_merged.reset_index(drop=True, inplace=True)
     return df_merged
 
+
 def calc_training_data():
     """ Generates ml label data by calculating future returns off of daily prices """
     # for each ticker, sort and process label data for ml training
@@ -113,7 +123,7 @@ def calc_training_data():
                 curr_date = sub_df['date'].iloc[i]
                 future_close = sub_df['adj. close'].iloc[i+_forecast_days]
                 future_return = (future_close/curr_close - 1)*100
-                label = adjusted_double_sigmoid(future_return, _forecast_threshold, _forecast_slope)
+                label = sigmoid(future_return, _forecast_threshold, _forecast_slope)
                 label_row_values = [ticker, curr_date, label, future_return]
                 new_df.loc[i] = label_row_values
             with open(_label_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
@@ -234,7 +244,7 @@ def _create_feature_data_frame(df_size):
 
 
 if __name__ == '__main__':
-    calc_ml_data()
+    # calc_ml_data()
     calc_training_data()
     df = get_all_feature_data()
     print('FEATURE DATA {} rows.'.format(len(df)))
