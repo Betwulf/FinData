@@ -196,7 +196,7 @@ def calc_ml_data():
                           '30 day rtn: {} 60 day rtn: {}'.format(return_9_day, return_15_day,
                                                                  return_30_day, return_60_day))
 
-                new_values = [ticker, curr_date, curr_return, curr_return_open, curr_return_high, curr_return_low,
+                new_values = [ticker, curr_date, 0, 0, 0, 0,
                               return_9_day, return_15_day, return_30_day, return_60_day,
                               ma_9_day, ma_15_day, ma_30_day, ma_60_day,
                               curr_year_high_pct, curr_year_low_pct, stddev_30, stddev_60]
@@ -204,8 +204,8 @@ def calc_ml_data():
 
             with open(_calced_path + _get_calc_filename(ticker), 'wt') as f:
                 f.write(new_df.to_json())
-            with open(_calced_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
-                f.write(new_df.to_csv())
+            # with open(_calced_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
+            #     f.write(new_df.to_csv())
 
 
 def _get_calc_filename(ticker, extension=".json"):
@@ -244,7 +244,7 @@ def _create_feature_data_frame(df_size):
 
 
 if __name__ == '__main__':
-    # calc_ml_data()
+    calc_ml_data()
     calc_training_data()
     df = get_all_feature_data()
     print('FEATURE DATA {} rows.'.format(len(df)))

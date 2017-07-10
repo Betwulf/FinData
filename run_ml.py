@@ -10,8 +10,9 @@ import collections
 import time
 
 
-# LSTM Parameters
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+# LSTM Parameters
 learning_rate = 0.001
 epochs = 50000
 display_step = 500

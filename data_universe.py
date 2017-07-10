@@ -47,9 +47,9 @@ def _get_tickerlist():
     snp_list = []
     with open(_data_path + 'universe.txt', 'rt', encoding='utf-8') as f:
         snp_list = [x.strip('\n') for x in f]
-    print("Got tickers... Top 10: ")
-    print(snp_list[:10])
-    return snp_list[:10]
+    print("Got tickers... Top 100: ")
+    print(snp_list[:100])
+    return snp_list[:100]
 
 
 def update_price_cache(ticker):
