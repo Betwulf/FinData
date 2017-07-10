@@ -58,26 +58,33 @@ def update_price_cache(ticker):
     print(" --- ")
     # TODO: Check to see if the file was updated today, if so then skip (unless a force param was sent)
     is_any, last_date = _any_ticker_files(ticker)
+    fin_data = None
     if not is_any:
-        print("New data for: " + ticker)
-        data = quandl.get(ticker)
+        try:
+            print("New data for: " + ticker)
+            fin_data = quandl.get(ticker)
+        except:
+            pass
     else:
-        print("Update data for: " + ticker)
-        data = quandl.get(ticker, start_date=last_date)
-
-    data.columns = [x.lower() for x in data.columns]
-    unique_months = {(x.year, x.month) for x in data.index}
-    print(data.head())
-    print("got {} months worth of data.".format(len(unique_months)))
-    # Add ticker to the dataframe
-    data['ticker'] = [ticker for _ in range(len(data[data.columns[0]]))]
-    for (year, month) in unique_months:
-        month_first, month_last = _get_day_range_for_month(year, month)
-        sub_data = data[month_first:month_last]
-        # not sure if this date formatting will be reversible on load...
-        sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
-        with open(_create_filename(ticker, year, month), 'wt') as f:
-            f.write(sub_data.to_json())
+        try:
+            print("Update data for: " + ticker)
+            fin_data = quandl.get(ticker, start_date=last_date)
+        except:
+            pass
+    if fin_data is not None:
+        fin_data.columns = [x.lower() for x in fin_data.columns]
+        unique_months = {(x.year, x.month) for x in fin_data.index}
+        print(fin_data.head())
+        print("got {} months worth of data.".format(len(unique_months)))
+        # Add ticker to the dataframe
+        fin_data['ticker'] = [ticker for _ in range(len(fin_data[fin_data.columns[0]]))]
+        for (year, month) in unique_months:
+            month_first, month_last = _get_day_range_for_month(year, month)
+            sub_data = fin_data[month_first:month_last]
+            # not sure if this date formatting will be reversible on load...
+            sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
+            with open(_create_filename(ticker, year, month), 'wt') as f:
+                f.write(sub_data.to_json())
 
 # TODO: Do we need this, or just use __all.json ?
 def get_ticker_prices():
@@ -107,8 +114,13 @@ def get_all_prices():
             all_data = pd.read_json(f)
             return all_data
     print('Reading raw price files...')
+    counter = 0
+    total_count = len(file_list)
     for file_found in file_list:
         if (file_found != _price_path + _combined_price_filename) & file_found.endswith('.json'):
+            if counter % total_count/20:
+                print("   {}% done...".format(counter/20))
+            counter += 1
             with open(file_found, 'rt') as f:
                 current_data = pd.read_json(f)
                 ttl_data = pd.concat([current_data, ttl_data])
@@ -172,7 +184,7 @@ if __name__ == '__main__':
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
     update_all_price_caches()
-    data = get_all_prices()
-    print('Total number of rows: {}'.format(len(data)))
+    fin_data = get_all_prices()
+    print('Total number of rows: {}'.format(len(fin_data)))
     print('Got data for the following tickers:')
-    print({t for t in data['ticker']})
+    print({t for t in fin_data['ticker']})
