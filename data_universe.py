@@ -59,18 +59,18 @@ def update_price_cache(ticker):
     # TODO: Check to see if the file was updated today, if so then skip (unless a force param was sent)
     is_any, last_date = _any_ticker_files(ticker)
     fin_data = None
-    if not is_any:
-        try:
+    try:
+        if not is_any:
             print("New data for: " + ticker)
             fin_data = quandl.get(ticker)
-        except:
-            pass
-    else:
-        try:
+        elif last_date == datetime.date.today():
+            print("data for {} is up to date.".format(ticker))
+        else:
             print("Update data for: " + ticker)
             fin_data = quandl.get(ticker, start_date=last_date)
-        except:
-            pass
+    except:
+        pass
+
     if fin_data is not None:
         fin_data.columns = [x.lower() for x in fin_data.columns]
         unique_months = {(x.year, x.month) for x in fin_data.index}
@@ -85,6 +85,7 @@ def update_price_cache(ticker):
             sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
             with open(_create_filename(ticker, year, month), 'wt') as f:
                 f.write(sub_data.to_json())
+
 
 # TODO: Do we need this, or just use __all.json ?
 def get_ticker_prices():

@@ -65,12 +65,12 @@ def _get_aggregated_data(a_path):
     ttl_data = pd.DataFrame()
     file_list = [a_path + a_file for a_file in os.listdir(a_path)]
     latest_file = max(file_list, key=os.path.getmtime)
-    print('latest file found: {}'.format(latest_file))
     if latest_file.find(_combined_filename) > -1:
         print('Reading cached file: {}'.format(_combined_filename))
         with open(a_path + _combined_filename, 'rt') as f:
             all_data = pd.read_json(f)
             return all_data
+    print('latest file found: {}'.format(latest_file))
     print('Reading raw price files...')
     for file_found in file_list:
         if (file_found != a_path + _combined_filename) & file_found.endswith('.json'):
@@ -123,7 +123,8 @@ def calc_training_data():
                 curr_date = sub_df['date'].iloc[i]
                 future_close = sub_df['adj. close'].iloc[i+_forecast_days]
                 future_return = (future_close/curr_close - 1)*100
-                label = sigmoid(future_return, _forecast_threshold, _forecast_slope)
+                label = float(future_return >= _forecast_threshold)
+
                 label_row_values = [ticker, curr_date, label, future_return]
                 new_df.loc[i] = label_row_values
             with open(_label_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
@@ -196,10 +197,13 @@ def calc_ml_data():
                           '30 day rtn: {} 60 day rtn: {}'.format(return_9_day, return_15_day,
                                                                  return_30_day, return_60_day))
 
-                new_values = [ticker, curr_date, 0, 0, 0, 0,
+                day_num = curr_date.weekday()
+
+                new_values = [ticker, curr_date,
                               return_9_day, return_15_day, return_30_day, return_60_day,
-                              ma_9_day, ma_15_day, ma_30_day, ma_60_day,
+                              ma_30_day, ma_60_day,
                               curr_year_high_pct, curr_year_low_pct, stddev_30, stddev_60]
+
                 new_df.loc[i] = new_values
 
             with open(_calced_path + _get_calc_filename(ticker), 'wt') as f:
@@ -228,17 +232,16 @@ def get_label_column():
 
 
 def get_feature_columns():
-    return ['return_daily', 'return_open', 'return_high', 'return_low',
-            'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
-            'ma_9_day', 'ma_15_day', 'ma_30_day', 'ma_60_day',
+    return ['return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
+            'ma_30_day', 'ma_60_day',
             'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day']
 
 
 def _create_feature_data_frame(df_size):
     df_features = pd.DataFrame(index=range(df_size),
-                               columns=('ticker', 'date', 'return_daily', 'return_open', 'return_high', 'return_low',
+                               columns=('ticker', 'date',
                                         'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
-                                        'ma_9_day', 'ma_15_day', 'ma_30_day', 'ma_60_day',
+                                        'ma_30_day', 'ma_60_day',
                                         'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day'))
     return df_features
 
