@@ -8,16 +8,16 @@ import tensorflow as tf
 from tensorflow.contrib import rnn
 import collections
 import time
-
+import datetime
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # LSTM Parameters
 learning_rate = 0.001
-epochs = 40000
-display_step = 500
+epochs = 400000
+display_step = 2000
 feature_count = 10
-feature_series_count = 3  # The number of inputs back-to-back to feed into the RNN
+feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
 hidden_neurons = 512
 
 
@@ -70,7 +70,9 @@ def RNN():
     x3 = tf.split(x2, num_or_size_splits=feature_series_count, axis=0)
 
     # 2-layer LSTM, each layer has n_hidden units.
-    rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(hidden_neurons), rnn.BasicLSTMCell(hidden_neurons)])
+    rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(hidden_neurons),
+                                 rnn.BasicLSTMCell(hidden_neurons),
+                                 rnn.BasicLSTMCell(32)])
 
     # generate prediction
     outputs, states = rnn.static_rnn(rnn_cell, x3, dtype=tf.float32)
@@ -83,7 +85,7 @@ def RNN():
     # Loss and optimizer
     # temp_cost = tf.reduce_mean(y - prediction)
     # cost = -tf.reduce_sum(y * tf.log(tf.clip_by_value(prediction, 1e-10, 1.0)))
-    cost = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(logits=prediction[0], targets=y, pos_weight=1.2))
+    cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=prediction[0], labels=y))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Initializing the variables
@@ -108,7 +110,8 @@ def RNN():
             if prediction_out[0] == label_data[0][0]:
                 acc_total += 1.
             if (step+1) % display_step == 0:
-                print("Iter= " + str(step+1) + ", Average Loss= " +
+                the_curr_time = datetime.datetime.now()
+                print("Time: " + the_curr_time + " Iter= " + str(step+1) + ", Average Loss= " +
                       "{:.6f}".format(cost_total/display_step) + ", Average Accuracy= " +
                       "{:.2f}%".format(100*acc_total/display_step))
                 acc_total = 0
@@ -116,7 +119,7 @@ def RNN():
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
                 print("Prediction for: {} - {}".format(ticker, data_date))
-                print("Actual [%s] vs [%s]" % (label_data[0], prediction_out))
+                print("Actual [%s] vs [%s] (unadjusted [%s] )" % (label_data[0], prediction_out, sub_prediction_out))
                 print("")
                 # print("outputs_out: {}".format(outputs_out))
             step += 1

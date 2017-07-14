@@ -5,16 +5,20 @@ import data_universe as du
 from utils import timing
 import datetime
 
-_label_dir = "\\data\\label\\"
-_calced_dir = "\\data\\calced\\"
+_label_dir = "\\data\\labels\\"
+_feature_dir = "\\data\\features\\"
 _combined_filename = "special.json"
 _cwd = os.getcwd()
-_calced_path = _cwd + _calced_dir
+_feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
 _forecast_days = 10  # numbers of days in the future to train on
 _forecast_threshold = 2  # train for positive results above/below this percent return
 _forecast_slope = 0.3  # the steep climb from 0 to 1 as x approaches the threshold precentage
+
+
+def min_max_scale(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
 
 
 def adjusted_double_sigmoid(x, target_value, slope):
@@ -38,16 +42,22 @@ def sigmoid(x, target_value, slope):
 
 def ticker_data():
     """ Iterator to get the next ticker and its corresponding data_frame of prices """
-    if not os.path.exists(_calced_path):
-        os.makedirs(_calced_path)
+    if not os.path.exists(_feature_path):
+        os.makedirs(_feature_path)
 
     if not os.path.exists(_label_path):
         os.makedirs(_label_path)
 
     df = du.get_all_prices()
-    tickers = iter({t for t in df['ticker']})
+
+    ticker_set = {t for t in df['ticker']}
+    ticker_count = len(ticker_set)
+    tickers = iter(ticker_set)
+    counter = 0
+
     # for each ticker, sort and process calculated data for ml
     while True:
+        counter += 1
         ticker = next(tickers)
         if ticker is None:
             break
@@ -57,7 +67,8 @@ def ticker_data():
         start_date = sub_df.head(1)['date'].iloc[0]
         end_date = sub_df.tail(1)['date'].iloc[0]
         print('   date_range: {} - {}'.format(start_date, end_date))
-        yield ticker, sub_df
+        percent_done = counter / ticker_count
+        yield ticker, sub_df, percent_done
 
 
 @timing
@@ -78,12 +89,15 @@ def _get_aggregated_data(a_path):
                 current_data = pd.read_json(f)
                 ttl_data = pd.concat([current_data, ttl_data])
 
+    # convert datetime column
+    ttl_data['date'].apply(pd.to_datetime)
+
     # process munged data
     ttl_data.reset_index(drop=True, inplace=True)
 
     # CSV for debugging use only
-    # with open(a_path + "__all.csv", 'wt') as f:
-    #     f.write(ttl_data.to_csv())
+    with open(a_path + "__all.csv", 'wt') as f:
+        f.write(ttl_data.to_csv())
     with open(a_path + _combined_filename, 'wt') as f:
         f.write(ttl_data.to_json())
     return ttl_data
@@ -91,7 +105,7 @@ def _get_aggregated_data(a_path):
 
 def get_all_feature_data():
     """ Returns a dataframe with all calculated data for ml to consume """
-    return _get_aggregated_data(_calced_path)
+    return _get_aggregated_data(_feature_path)
 
 
 def get_all_label_data():
@@ -111,7 +125,13 @@ def get_all_ml_data():
 def calc_training_data():
     """ Generates ml label data by calculating future returns off of daily prices """
     # for each ticker, sort and process label data for ml training
-    for ticker, sub_df in ticker_data():
+    for ticker, sub_df, percent_done in ticker_data():
+
+        # Let people know how long this might take...
+        if int(percent_done) % 5 == 0:
+            print("   {0:.0f}% done...".format(percent_done * 100))
+
+        # Check data size....
         if len(sub_df) < _forecast_days:
             print("{} does not have enough data to forecast training data".format(ticker))
         else:
@@ -136,7 +156,11 @@ def calc_training_data():
 def calc_ml_data():
     """ Generates ml data by calculating specific values off of daily prices """
     # for each ticker, sort and process calculated data for ml
-    for ticker, sub_df in ticker_data():
+    for ticker, sub_df, percent_done in ticker_data():
+
+        # Let people know how long this might take...
+        if int(percent_done) % 5 == 0:
+            print("   {0:.0f}% done...".format(percent_done * 100))
 
         # check if we have enough history to calc year high / low
         if len(sub_df) <= _business_days_in_a_year:
@@ -206,7 +230,11 @@ def calc_ml_data():
 
                 new_df.loc[i] = new_values
 
-            with open(_calced_path + _get_calc_filename(ticker), 'wt') as f:
+            # Now normalize the data
+            for col in get_feature_columns():
+               new_df[col] = np.clip(new_df[col], -1., 1.)
+
+            with open(_feature_path + _get_calc_filename(ticker), 'wt') as f:
                 f.write(new_df.to_json())
             # with open(_calced_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
             #     f.write(new_df.to_csv())

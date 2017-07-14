@@ -14,6 +14,11 @@ _cwd = os.getcwd()
 _data_path = _cwd + _data_dir
 _price_path = _cwd + _price_dir
 
+# Generate a list of all current price files...
+file_list = []
+for file_found in os.listdir(_price_path):
+    file_list.append(file_found)
+
 
 def create_universe_from_json():
     """Creates the listfile of tickers to use in the rest of the app provided a given source"""
@@ -57,13 +62,14 @@ def update_price_cache(ticker):
 
     print(" --- ")
     # TODO: Check to see if the file was updated today, if so then skip (unless a force param was sent)
-    is_any, last_date = _any_ticker_files(ticker)
+    is_any, last_date, file_timestamp = _any_ticker_files(ticker)
     fin_data = None
+    curr_day = datetime.datetime.today().replace(hour=0, minute=0, second=0)
     try:
         if not is_any:
             print("New data for: " + ticker)
             fin_data = quandl.get(ticker)
-        elif last_date == datetime.date.today():
+        elif file_timestamp >= curr_day:
             print("data for {} is up to date.".format(ticker))
         else:
             print("Update data for: " + ticker)
@@ -119,8 +125,8 @@ def get_all_prices():
     total_count = len(file_list)
     for file_found in file_list:
         if (file_found != _price_path + _combined_price_filename) & file_found.endswith('.json'):
-            if counter % total_count/20:
-                print("   {}% done...".format(counter/20))
+            if counter % int(total_count/20) == 0:
+                print("   {0:.0f}% done...".format((counter/total_count)*100))
             counter += 1
             with open(file_found, 'rt') as f:
                 current_data = pd.read_json(f)
@@ -164,15 +170,18 @@ def _any_ticker_files(ticker):
     This saves us from having to go to the source and reload data. """
     last_date = datetime.date(1900, 1, 1)
     old_date = last_date
-    for file_found in os.listdir(_price_path):
+    file_timestamp = datetime.datetime(1900, 1, 1)
+    for file_found in file_list:
+        file_timestamp = max(file_timestamp,
+                             datetime.datetime.fromtimestamp(os.path.getmtime(_price_path + file_found)))
         if (file_found.find(_combined_price_filename) == -1) & file_found.endswith('.json'):
             file_ticker, file_year, file_month = _parse_filename(file_found)
             if file_ticker == ticker:
                 file_date = datetime.date(file_year, file_month, 1)
                 last_date = max([last_date, file_date])
     if old_date == last_date:
-        return False, last_date
-    return True, last_date
+        return False, last_date, file_timestamp
+    return True, last_date, file_timestamp
 
 
 if __name__ == '__main__':
@@ -186,6 +195,7 @@ if __name__ == '__main__':
     quandl.ApiConfig.api_key = api_key
     update_all_price_caches()
     fin_data = get_all_prices()
+    print(fin_data.describe())
     print('Total number of rows: {}'.format(len(fin_data)))
     print('Got data for the following tickers:')
     print({t for t in fin_data['ticker']})
