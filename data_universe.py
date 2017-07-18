@@ -14,6 +14,12 @@ _cwd = os.getcwd()
 _data_path = _cwd + _data_dir
 _price_path = _cwd + _price_dir
 
+# ensure paths are there...
+if not os.path.exists(_data_path):
+    os.makedirs(_data_path)
+if not os.path.exists(_price_path):
+    os.makedirs(_price_path)
+
 # Generate a list of all current price files...
 file_list = []
 for file_found in os.listdir(_price_path):
@@ -23,9 +29,6 @@ for file_found in os.listdir(_price_path):
 def create_universe_from_json():
     """Creates the listfile of tickers to use in the rest of the app provided a given source"""
     snp_list = []
-
-    if not os.path.exists(_data_path):
-        os.makedirs(_data_path)
 
     with open('S&P500.json', 'rb') as f:
         json = pd.read_json(f)
@@ -39,8 +42,6 @@ def create_universe_from_json():
 
 def update_all_price_caches():
     """ Go through each ticker in the universe and either get beginning data or update latest data """
-    if not os.path.exists(_price_path):
-        os.makedirs(_price_path)
 
     # TODO: only working with the first 3 tickers while debugging
     snp_list = _get_tickerlist()
@@ -52,9 +53,9 @@ def _get_tickerlist():
     snp_list = []
     with open(_data_path + 'universe.txt', 'rt', encoding='utf-8') as f:
         snp_list = [x.strip('\n') for x in f]
-    print("Got tickers... Top 100: ")
-    print(snp_list[:100])
-    return snp_list[:100]
+    print("Got tickers... Top 4: ")
+    print(snp_list[:4])
+    return snp_list[:4]
 
 
 def update_price_cache(ticker):

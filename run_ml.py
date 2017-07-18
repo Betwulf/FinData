@@ -19,6 +19,7 @@ display_step = 2000
 feature_count = 10
 feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
 hidden_neurons = 512
+last_hidden_neurons = 32
 
 
 # Target log path
@@ -58,7 +59,7 @@ def RNN():
 
     # RNN output node weights and biases
     weights = {
-        'out': tf.Variable(tf.random_normal([hidden_neurons, 1]))
+        'out': tf.Variable(tf.random_normal([last_hidden_neurons, 1]))
     }
     biases = {
         'out': tf.Variable(tf.random_normal([1]))
@@ -72,7 +73,7 @@ def RNN():
     # 2-layer LSTM, each layer has n_hidden units.
     rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(hidden_neurons),
                                  rnn.BasicLSTMCell(hidden_neurons),
-                                 rnn.BasicLSTMCell(32)])
+                                 rnn.BasicLSTMCell(last_hidden_neurons)])
 
     # generate prediction
     outputs, states = rnn.static_rnn(rnn_cell, x3, dtype=tf.float32)
@@ -80,19 +81,20 @@ def RNN():
     # there are feature_series_count outputs but
     # we only want the last output
     prediction = (tf.matmul(outputs[-1], weights['out']) + biases['out'])
-    prediction_adjust = (tf.abs(prediction[0]) + prediction[0])/(2*prediction[0])
+    # prediction_adjust = tf.round(prediction)
 
     # Loss and optimizer
     # temp_cost = tf.reduce_mean(y - prediction)
     # cost = -tf.reduce_sum(y * tf.log(tf.clip_by_value(prediction, 1e-10, 1.0)))
-    cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=prediction[0], labels=y))
-    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+    cost = tf.reduce_mean(tf.square(y - prediction[0]))
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Initializing the variables
     init = tf.global_variables_initializer()
 
     # Launch the graph
     with tf.Session() as session:
+        print("Starting tensorflow...")
         session.run(init)
         step = 0
         acc_total = 0
@@ -103,23 +105,25 @@ def RNN():
         while step < epochs:
             # Generate a minibatch. Add some randomness on selection process.
             feature_data, label_data, descriptive_df = get_next_data()
-            _, cost_out, sub_prediction_out, prediction_out, out_out = session.run([optimizer, cost, prediction, prediction_adjust, outputs],
+            _, cost_out, prediction_out, out_out = session.run([optimizer, cost, prediction, outputs],
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
             cost_total += cost_out
-            if prediction_out[0] == label_data[0][0]:
-                acc_total += 1.
-            if (step+1) % display_step == 0:
-                the_curr_time = datetime.datetime.now()
-                print("Time: " + the_curr_time + " Iter= " + str(step+1) + ", Average Loss= " +
-                      "{:.6f}".format(cost_total/display_step) + ", Average Accuracy= " +
-                      "{:.2f}%".format(100*acc_total/display_step))
+            acc_total += np.abs(label_data[0][0] - prediction_out[0][0])
+            if ((step+1) % display_step == 0) or step < 10:
+                the_curr_time = datetime.datetime.now().strftime('%X')
+                print_string = "Time: {}".format(the_curr_time)
+                print_string += " Iter= " + str(step+1)
+                print_string += " , Average Loss= {:1.4f}".format(cost_total/display_step)
+                print_string += " , Average Accuracy= {:3.2f}%".format(100*acc_total/display_step)
+
+                print(print_string)
                 acc_total = 0
                 cost_total = 0
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
-                print("Prediction for: {} - {}".format(ticker, data_date))
-                print("Actual [%s] vs [%s] (unadjusted [%s] )" % (label_data[0], prediction_out, sub_prediction_out))
+                print("Prediction for: {} - {}".format(ticker, data_date.strftime('%x')))
+                print("Actual {:1.4f} vs {:1.4f} (cost {:1.4f} )".format(label_data[0], prediction_out, cost_out))
                 print("")
                 # print("outputs_out: {}".format(outputs_out))
             step += 1

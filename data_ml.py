@@ -12,9 +12,9 @@ _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 10  # numbers of days in the future to train on
-_forecast_threshold = 2  # train for positive results above/below this percent return
-_forecast_slope = 0.3  # the steep climb from 0 to 1 as x approaches the threshold precentage
+_forecast_days = 20  # numbers of days in the future to train on
+_forecast_threshold = 4  # train for positive results above/below this percent return
+_forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
 def min_max_scale(data):
@@ -75,11 +75,15 @@ def ticker_data():
 def _get_aggregated_data(a_path):
     ttl_data = pd.DataFrame()
     file_list = [a_path + a_file for a_file in os.listdir(a_path)]
-    latest_file = max(file_list, key=os.path.getmtime)
+    latest_file = ""
+    if len(file_list) > 0:
+        latest_file = max(file_list, key=os.path.getmtime)
     if latest_file.find(_combined_filename) > -1:
         print('Reading cached file: {}'.format(_combined_filename))
         with open(a_path + _combined_filename, 'rt') as f:
             all_data = pd.read_json(f)
+            # convert datetime column
+            all_data['date'].apply(pd.to_datetime)
             return all_data
     print('latest file found: {}'.format(latest_file))
     print('Reading raw price files...')
@@ -122,6 +126,7 @@ def get_all_ml_data():
     return df_merged
 
 
+@timing
 def calc_training_data():
     """ Generates ml label data by calculating future returns off of daily prices """
     # for each ticker, sort and process label data for ml training
@@ -143,7 +148,9 @@ def calc_training_data():
                 curr_date = sub_df['date'].iloc[i]
                 future_close = sub_df['adj. close'].iloc[i+_forecast_days]
                 future_return = (future_close/curr_close - 1)*100
-                label = float(future_return >= _forecast_threshold)
+
+                # Try shaping the label more smoothly
+                label = sigmoid(future_return, _forecast_threshold, _forecast_slope)
 
                 label_row_values = [ticker, curr_date, label, future_return]
                 new_df.loc[i] = label_row_values
@@ -152,7 +159,7 @@ def calc_training_data():
             with open(_label_path + _get_calc_filename(ticker), 'wt') as f:
                 f.write(new_df.to_json())
 
-
+@timing
 def calc_ml_data():
     """ Generates ml data by calculating specific values off of daily prices """
     # for each ticker, sort and process calculated data for ml
