@@ -105,7 +105,7 @@ def RNN():
         while step < epochs:
             # Generate a minibatch. Add some randomness on selection process.
             feature_data, label_data, descriptive_df = get_next_data()
-            _, cost_out, prediction_out, out_out = session.run([optimizer, cost, prediction, outputs],
+            _, cost_out, prediction_out = session.run([optimizer, cost, prediction],
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
             cost_total += cost_out
@@ -123,7 +123,7 @@ def RNN():
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
                 print("Prediction for: {} - {}".format(ticker, data_date.strftime('%x')))
-                print("Actual {:1.4f} vs {:1.4f} (cost {:1.4f} )".format(label_data[0], prediction_out, cost_out))
+                print("Actual {:1.4f} vs {:1.4f} (cost {:1.4f} )".format(label_data[0][0], prediction_out[0][0], cost_out))
                 print("")
                 # print("outputs_out: {}".format(outputs_out))
             step += 1

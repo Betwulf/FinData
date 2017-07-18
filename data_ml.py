@@ -17,6 +17,13 @@ _forecast_threshold = 4  # train for positive results above/below this percent r
 _forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
+# ensure paths are there...
+if not os.path.exists(_feature_path):
+    os.makedirs(_feature_path)
+
+if not os.path.exists(_label_path):
+    os.makedirs(_label_path)
+
 def min_max_scale(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
@@ -42,11 +49,6 @@ def sigmoid(x, target_value, slope):
 
 def ticker_data():
     """ Iterator to get the next ticker and its corresponding data_frame of prices """
-    if not os.path.exists(_feature_path):
-        os.makedirs(_feature_path)
-
-    if not os.path.exists(_label_path):
-        os.makedirs(_label_path)
 
     df = du.get_all_prices()
 
