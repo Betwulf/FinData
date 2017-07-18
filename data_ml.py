@@ -133,7 +133,7 @@ def calc_training_data():
     for ticker, sub_df, percent_done in ticker_data():
 
         # Let people know how long this might take...
-        if int(percent_done) % 5 == 0:
+        if int(percent_done*100) % 5 == 0:
             print("   {0:.0f}% done...".format(percent_done * 100))
 
         # Check data size....
