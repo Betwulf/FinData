@@ -109,8 +109,8 @@ def RNN():
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
             cost_total += cost_out
-            acc_total += np.abs(label_data[0][0] - prediction_out[0][0])
-            if ((step+1) % display_step == 0) or step < 10:
+            acc_total += 1 - min([np.abs(label_data[0][0] - prediction_out[0][0]), 1])
+            if ((step+1) % display_step == 0) or step == 0:
                 the_curr_time = datetime.datetime.now().strftime('%X')
                 print_string = "Time: {}".format(the_curr_time)
                 print_string += " Iter= " + str(step+1)
