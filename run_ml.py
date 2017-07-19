@@ -16,6 +16,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 learning_rate = 0.001
 epochs = 400000
 display_step = 2000
+label_count = 2
 feature_count = 10
 feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
 hidden_neurons = 512
@@ -44,8 +45,8 @@ def get_next_data():
     # get data for ml
     feature_matrix = train_df.as_matrix(columns=dml.get_feature_columns())
     feature_shaped = np.reshape(feature_matrix, [feature_series_count, feature_count])
-    label_value = np.array(train_df[dml.get_label_column()[0]].values[-1])
-    label_array = np.reshape(label_value, [1, 1])
+    label_values = np.array(train_df[dml.get_label_columns()].values[-1])
+    label_array = np.reshape(label_values, [1, label_count])
     descriptive_df = train_df.drop(dml.get_feature_columns(), axis=1)
     return feature_shaped, label_array, descriptive_df
 
@@ -55,11 +56,11 @@ def RNN():
 
     # tf graph input
     x = tf.placeholder("float", [feature_series_count, feature_count])
-    y = tf.placeholder("float", [1])
+    y = tf.placeholder("float", [label_count])
 
     # RNN output node weights and biases
     weights = {
-        'out': tf.Variable(tf.random_normal([last_hidden_neurons, 1]))
+        'out': tf.Variable(tf.random_normal([last_hidden_neurons, label_count]))
     }
     biases = {
         'out': tf.Variable(tf.random_normal([1]))
@@ -84,10 +85,9 @@ def RNN():
     # prediction_adjust = tf.round(prediction)
 
     # Loss and optimizer
-    # temp_cost = tf.reduce_mean(y - prediction)
-    # cost = -tf.reduce_sum(y * tf.log(tf.clip_by_value(prediction, 1e-10, 1.0)))
-    cost = tf.reduce_mean(tf.square(y - prediction[0]))
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+    # cost = tf.reduce_mean(tf.square(y - prediction[0]))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y))
+    optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Initializing the variables
     init = tf.global_variables_initializer()
@@ -109,7 +109,8 @@ def RNN():
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
             cost_total += cost_out
-            acc_total += 1 - min([np.abs(label_data[0][0] - prediction_out[0][0]), 1])
+            average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
+            acc_total += 1 - min([average_difference, 1])
             if ((step+1) % display_step == 0) or step == 0:
                 the_curr_time = datetime.datetime.now().strftime('%X')
                 print_string = "Time: {}".format(the_curr_time)
@@ -123,7 +124,8 @@ def RNN():
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
                 print("Prediction for: {} - {}".format(ticker, data_date.strftime('%x')))
-                print("Actual {:1.4f} vs {:1.4f} (cost {:1.4f} )".format(label_data[0][0], prediction_out[0][0], cost_out))
+                print("Buy - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                print("Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
                 print("")
                 # print("outputs_out: {}".format(outputs_out))
             step += 1

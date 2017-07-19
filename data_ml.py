@@ -13,7 +13,8 @@ _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
 _forecast_days = 20  # numbers of days in the future to train on
-_forecast_threshold = 4  # train for positive results above/below this percent return
+_forecast_buy_threshold = 4  # train for positive results above this percent return
+_forecast_sell_threshold = -2  # train for positive results below this percent return
 _forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
@@ -152,9 +153,10 @@ def calc_training_data():
                 future_return = (future_close/curr_close - 1)*100
 
                 # Try shaping the label more smoothly
-                label = sigmoid(future_return, _forecast_threshold, _forecast_slope)
+                buy_label = sigmoid(future_return, _forecast_buy_threshold, _forecast_slope)
+                sell_label = 1 - sigmoid(future_return, _forecast_sell_threshold, _forecast_slope)
 
-                label_row_values = [ticker, curr_date, label, future_return]
+                label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
                 new_df.loc[i] = label_row_values
             with open(_label_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
                 f.write(new_df.to_csv())
@@ -256,7 +258,7 @@ def _get_calc_filename(ticker, extension=".json"):
 
 
 def _create_training_data_frame(df_size):
-    df_label = pd.DataFrame(index=range(df_size), columns=('ticker', 'date', 'label', 'future_return'))
+    df_label = pd.DataFrame(index=range(df_size), columns=('ticker', 'date', 'buy_label', 'sell_label', 'future_return'))
     return df_label
 
 
@@ -264,8 +266,8 @@ def get_descriptive_columns():
     return ['ticker', 'date']
 
 
-def get_label_column():
-    return ['label']
+def get_label_columns():
+    return ['buy_label', 'sell_label']
 
 
 def get_feature_columns():
