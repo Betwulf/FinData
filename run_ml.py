@@ -9,6 +9,7 @@ from tensorflow.contrib import rnn
 import collections
 import time
 import datetime
+import training_data as td
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -21,38 +22,18 @@ feature_count = 10
 feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
 hidden_neurons = 512
 last_hidden_neurons = 32
-
+test_data_date = datetime.datetime(2016, 6, 30)
+model_file = './model/model.ckpt'
 
 # Target log path
 logs_path = './logs'
 writer = tf.summary.FileWriter(logs_path)
 
-# get the dataframe, this may be a lot of data....
-data_df = dml.get_all_ml_data()
 
-
-def get_next_data():
-    # Get random ticker
-    tickers = list({t for t in data_df['ticker']})
-    rnd_ticker_num = np.random.randint(0, len(tickers))
-    ticker_df = data_df[data_df.ticker == tickers[rnd_ticker_num]]
-
-    # get random series for this ticker
-    series_count = len(ticker_df) - feature_series_count
-    rnd_series_num = np.random.randint(0, series_count)
-    train_df = ticker_df.iloc[rnd_series_num:rnd_series_num + feature_series_count]
-
-    # get data for ml
-    feature_matrix = train_df.as_matrix(columns=dml.get_feature_columns())
-    feature_shaped = np.reshape(feature_matrix, [feature_series_count, feature_count])
-    label_values = np.array(train_df[dml.get_label_columns()].values[-1])
-    label_array = np.reshape(label_values, [1, label_count])
-    descriptive_df = train_df.drop(dml.get_feature_columns(), axis=1)
-    return feature_shaped, label_array, descriptive_df
 
 
 @timing
-def RNN():
+def RNN(training_data_class):
 
     # tf graph input
     x = tf.placeholder("float", [feature_series_count, feature_count])
@@ -86,7 +67,8 @@ def RNN():
 
     # Loss and optimizer
     # cost = tf.reduce_mean(tf.square(y - prediction[0]))
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y))
+    sub_cost = tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)
+    cost = tf.reduce_mean(sub_cost)
     optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Initializing the variables
@@ -97,15 +79,18 @@ def RNN():
         print("Starting tensorflow...")
         session.run(init)
         step = 0
-        acc_total = 0
-        cost_total = 0
+        acc_total = 0.0
+        cost_total = 0.0
 
         writer.add_graph(session.graph)
 
         while step < epochs:
-            # Generate a minibatch. Add some randomness on selection process.
-            feature_data, label_data, descriptive_df = get_next_data()
-            _, cost_out, prediction_out = session.run([optimizer, cost, prediction],
+            # get data
+            feature_data, label_data, descriptive_df = \
+                training_data_class.get_next_training_data(feature_series_count, feature_count, label_count)
+
+            # Run the Optimizer
+            _, sub_cost_out, cost_out, prediction_out = session.run([optimizer, sub_cost, cost, prediction],
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
             cost_total += cost_out
@@ -124,8 +109,9 @@ def RNN():
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
                 print("Prediction for: {} - {}".format(ticker, data_date.strftime('%x')))
-                print("Buy - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
-                print("Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
+                print("   Buy - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
+                print("sub cost: {:1.4f} - cost: {:1.4f}".format(sub_cost_out[0], cost_out))
                 print("")
                 # print("outputs_out: {}".format(outputs_out))
             step += 1
@@ -137,7 +123,20 @@ def RNN():
         prompt = "Hit enter to finish."
         sentence = input(prompt)
 
+        saver = tf.train.Saver()
+        # Save the variables to disk.
+        save_path = saver.save(session, model_file)
+        print("Model saved in file: %s" % save_path)
+
 
 if __name__ == '__main__':
-    RNN()
+
+    # get the dataframe, this may be a lot of data....
+    data_df = dml.get_all_ml_data()
+    training_df = data_df[data_df.date < test_data_date]
+    test_df = data_df[data_df.date >= test_data_date]
+    del data_df
+
+    training_data_class = td.TrainingData(training_df)
+    RNN(training_data_class)
 

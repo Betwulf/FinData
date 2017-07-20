@@ -74,7 +74,6 @@ def ticker_data():
         yield ticker, sub_df, percent_done
 
 
-@timing
 def _get_aggregated_data(a_path):
     ttl_data = pd.DataFrame()
     file_list = [a_path + a_file for a_file in os.listdir(a_path)]
@@ -110,11 +109,13 @@ def _get_aggregated_data(a_path):
     return ttl_data
 
 
+@timing
 def get_all_feature_data():
     """ Returns a dataframe with all calculated data for ml to consume """
     return _get_aggregated_data(_feature_path)
 
 
+@timing
 def get_all_label_data():
     """ Returns a dataframe with all label data for ml to consume """
     return _get_aggregated_data(_label_path)
