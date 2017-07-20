@@ -159,8 +159,8 @@ def calc_training_data():
 
                 label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
                 new_df.loc[i] = label_row_values
-            with open(_label_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
-                f.write(new_df.to_csv())
+            # with open(_label_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
+            #     f.write(new_df.to_csv())
             with open(_label_path + _get_calc_filename(ticker), 'wt') as f:
                 f.write(new_df.to_json())
 
@@ -244,7 +244,7 @@ def calc_ml_data():
 
             # Now normalize the data
             for col in get_feature_columns():
-               new_df[col] = np.clip(new_df[col], -1., 1.)
+                new_df[col] = np.clip(new_df[col], -1., 1.)
 
             with open(_feature_path + _get_calc_filename(ticker), 'wt') as f:
                 f.write(new_df.to_json())

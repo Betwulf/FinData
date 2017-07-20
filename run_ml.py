@@ -66,9 +66,8 @@ def RNN(training_data_class):
     # prediction_adjust = tf.round(prediction)
 
     # Loss and optimizer
-    # cost = tf.reduce_mean(tf.square(y - prediction[0]))
-    sub_cost = tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)
-    cost = tf.reduce_mean(sub_cost)
+    # cost = tf.nn.softmax_cross_entropy_with_logits(logits=prediction[0], labels=y)
+    cost = tf.reduce_mean(tf.square(y - prediction[0]))
     optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate).minimize(cost)
 
     # Initializing the variables
@@ -86,11 +85,10 @@ def RNN(training_data_class):
 
         while step < epochs:
             # get data
-            feature_data, label_data, descriptive_df = \
-                training_data_class.get_next_training_data(feature_series_count, feature_count, label_count)
+            feature_data, label_data, descriptive_df = training_data_class.get_next_training_data()
 
             # Run the Optimizer
-            _, sub_cost_out, cost_out, prediction_out = session.run([optimizer, sub_cost, cost, prediction],
+            _, cost_out, prediction_out = session.run([optimizer, cost, prediction],
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
             cost_total += cost_out
@@ -104,14 +102,13 @@ def RNN(training_data_class):
                 print_string += " , Average Accuracy= {:3.2f}%".format(100*acc_total/display_step)
 
                 print(print_string)
-                acc_total = 0
-                cost_total = 0
+                acc_total = 0.0
+                cost_total = 0.0
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
-                print("Prediction for: {} - {}".format(ticker, data_date.strftime('%x')))
+                print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
                 print("   Buy - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
                 print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
-                print("sub cost: {:1.4f} - cost: {:1.4f}".format(sub_cost_out[0], cost_out))
                 print("")
                 # print("outputs_out: {}".format(outputs_out))
             step += 1
@@ -135,8 +132,8 @@ if __name__ == '__main__':
     data_df = dml.get_all_ml_data()
     training_df = data_df[data_df.date < test_data_date]
     test_df = data_df[data_df.date >= test_data_date]
-    del data_df
+    # del data_df
 
-    training_data_class = td.TrainingData(training_df)
+    training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
     RNN(training_data_class)
 
