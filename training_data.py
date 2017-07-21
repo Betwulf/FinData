@@ -48,7 +48,8 @@ class TrainingData:
     def get_next_training_data(self):
         # if we have used up all data possible, then reset and reuse training data
         if self.ticker_df_curr_row.sum() == -self.ticker_count:
-            self.ticker_df_curr_row = np.zeros(self.ticker_count)
+            print("Used up all the training labels, resetting...")
+            self.ticker_df_curr_row = np.zeros(self.ticker_count, dtype=np.int)
             self.curr_ticker = 0
 
         # if this ticker has used up all of its data, then try the next ticker
@@ -72,6 +73,7 @@ class TrainingData:
         self.ticker_df_curr_row[self.curr_ticker] = int(self.ticker_df_curr_row[self.curr_ticker] + 1)
         if len(ticker_df) < self.ticker_df_curr_row[self.curr_ticker] + self.feature_series_count:
             self.ticker_df_curr_row[self.curr_ticker] = -1  # we have exhausted this tickers data
+            # print("Exhausted data for {}".format(descriptive_df.iloc[0]))
         self.curr_ticker = (self.curr_ticker + 1) % self.ticker_count
 
         return feature_shaped, label_array, descriptive_df

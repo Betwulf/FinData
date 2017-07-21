@@ -53,9 +53,9 @@ def _get_tickerlist():
     snp_list = []
     with open(_data_path + 'universe.txt', 'rt', encoding='utf-8') as f:
         snp_list = [x.strip('\n') for x in f]
-    print("Got tickers... Top 5: ")
-    print(snp_list[:5])
-    return snp_list[:5]
+    print("Got tickers... Top 200: ")
+    print(snp_list[:200])
+    return snp_list[:200]
 
 
 def update_price_cache(ticker):
@@ -90,8 +90,11 @@ def update_price_cache(ticker):
             sub_data = fin_data[month_first:month_last]
             # not sure if this date formatting will be reversible on load...
             sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
-            with open(_create_filename(ticker, year, month), 'wt') as f:
-                f.write(sub_data.to_json())
+            # Don't want data before 1970 - timestamps don't work before then...
+            # But really... I don't want anything older than 1998 i reckon... vastly different trading behaviors
+            if year > 1998:
+                with open(_create_filename(ticker, year, month), 'wt') as f:
+                        f.write(sub_data.to_json())
 
 
 # TODO: Do we need this, or just use __all.json ?
@@ -138,9 +141,7 @@ def get_all_prices():
     ttl_data.sort_values('date', inplace=True)
     ttl_data.reset_index(drop=True, inplace=True)
 
-    # CSV for debugging use only
-    with open(_price_path + "__all.csv", 'wt') as f:
-        f.write(ttl_data.to_csv())
+    # Save the file...
     with open(_price_path + _combined_price_filename, 'wt') as f:
         f.write(ttl_data.to_json())
     return ttl_data

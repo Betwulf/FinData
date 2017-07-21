@@ -15,7 +15,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # LSTM Parameters
 learning_rate = 0.001
-epochs = 400000
+epochs = 500000
 display_step = 2000
 label_count = 2
 feature_count = 10
@@ -33,7 +33,7 @@ writer = tf.summary.FileWriter(logs_path)
 
 
 @timing
-def RNN(training_data_class):
+def train_rnn(training_data_class):
 
     # tf graph input
     x = tf.placeholder("float", [feature_series_count, feature_count])
@@ -135,5 +135,5 @@ if __name__ == '__main__':
     # del data_df
 
     training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
-    RNN(training_data_class)
+    train_rnn(training_data_class)
 

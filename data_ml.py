@@ -25,6 +25,7 @@ if not os.path.exists(_feature_path):
 if not os.path.exists(_label_path):
     os.makedirs(_label_path)
 
+
 def min_max_scale(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
@@ -51,9 +52,9 @@ def sigmoid(x, target_value, slope):
 def ticker_data():
     """ Iterator to get the next ticker and its corresponding data_frame of prices """
 
-    df = du.get_all_prices()
+    main_df = du.get_all_prices()
 
-    ticker_set = {t for t in df['ticker']}
+    ticker_set = {t for t in main_df['ticker']}
     ticker_count = len(ticker_set)
     tickers = iter(ticker_set)
     counter = 0
@@ -64,7 +65,7 @@ def ticker_data():
         ticker = next(tickers)
         if ticker is None:
             break
-        sub_df = df[df.ticker == ticker]
+        sub_df = main_df[main_df.ticker == ticker]
         sub_df = sub_df.sort_values(by='date')
         print('ticker: {} - rows: {}'.format(ticker, len(sub_df)))
         start_date = sub_df.head(1)['date'].iloc[0]
@@ -93,6 +94,8 @@ def _get_aggregated_data(a_path):
         if (file_found != a_path + _combined_filename) & file_found.endswith('.json'):
             with open(file_found, 'rt') as f:
                 current_data = pd.read_json(f)
+                if current_data['date'].dtype == np.int64:
+                    print("file: {} - type: {} ".format(file_found, current_data['date'].dtype))
                 ttl_data = pd.concat([current_data, ttl_data])
 
     # convert datetime column
@@ -102,9 +105,7 @@ def _get_aggregated_data(a_path):
     ttl_data.reset_index(drop=True, inplace=True)
 
     # CSV for debugging use only
-    with open(a_path + "__all.csv", 'wt') as f:
-        f.write(ttl_data.to_csv())
-    with open(a_path + _combined_filename, 'wt') as f:
+    with open(a_path + _combined_filename, 'wt', encoding='utf-8') as f:
         f.write(ttl_data.to_json())
     return ttl_data
 
@@ -159,10 +160,9 @@ def calc_training_data():
 
                 label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
                 new_df.loc[i] = label_row_values
-            # with open(_label_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
-            #     f.write(new_df.to_csv())
-            with open(_label_path + _get_calc_filename(ticker), 'wt') as f:
+            with open(_label_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
                 f.write(new_df.to_json())
+
 
 @timing
 def calc_ml_data():
@@ -171,7 +171,7 @@ def calc_ml_data():
     for ticker, sub_df, percent_done in ticker_data():
 
         # Let people know how long this might take...
-        if int(percent_done) % 5 == 0:
+        if int(percent_done*100) % 5 == 0:
             print("   {0:.0f}% done...".format(percent_done * 100))
 
         # check if we have enough history to calc year high / low
@@ -246,10 +246,8 @@ def calc_ml_data():
             for col in get_feature_columns():
                 new_df[col] = np.clip(new_df[col], -1., 1.)
 
-            with open(_feature_path + _get_calc_filename(ticker), 'wt') as f:
+            with open(_feature_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
                 f.write(new_df.to_json())
-            # with open(_calced_path + _get_calc_filename(ticker, extension='.csv'), 'wt') as f:
-            #     f.write(new_df.to_csv())
 
 
 def _get_calc_filename(ticker, extension=".json"):
@@ -287,8 +285,8 @@ def _create_feature_data_frame(df_size):
 
 
 if __name__ == '__main__':
-    calc_ml_data()
-    calc_training_data()
+    # calc_ml_data()
+    # calc_training_data()
     df = get_all_feature_data()
     print('FEATURE DATA {} rows.'.format(len(df)))
     print(df.describe())
