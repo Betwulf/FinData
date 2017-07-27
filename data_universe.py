@@ -27,8 +27,8 @@ for file_found in os.listdir(_price_path):
 
 
 def create_universe_from_json():
-    """Creates the listfile of tickers to use in the rest of the app provided a given source"""
-    snp_list = []
+    """Creates the list file of tickers to use in the rest of the app provided a given source"""
+    # snp_list = []
 
     with open('S&P500.json', 'rb') as f:
         json = pd.read_json(f)
@@ -50,7 +50,7 @@ def update_all_price_caches():
 
 
 def _get_tickerlist():
-    snp_list = []
+    # snp_list = []
     with open(_data_path + 'universe.txt', 'rt', encoding='utf-8') as f:
         snp_list = [x.strip('\n') for x in f]
     print("Got tickers... Top 200: ")
