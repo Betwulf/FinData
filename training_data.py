@@ -19,7 +19,11 @@ class TrainingData:
         self.tickers_df_list = []
         for ticker_num in range(self.ticker_count):
             ticker_df = data_df[data_df.ticker == self.tickers[ticker_num]]
-            self.tickers_df_list.append(ticker_df)
+            if len(ticker_df) < feature_series_count:
+                print("not enough data - {} - {}".format(ticker_df['date'], ticker_df['ticker']))
+                self.ticker_count = self.ticker_count - 1
+            else:
+                self.tickers_df_list.append(ticker_df)
 
         self.ticker_df_curr_row = np.zeros(self.ticker_count, dtype=np.int)
 
@@ -60,6 +64,10 @@ class TrainingData:
         ticker_df = self.tickers_df_list[self.curr_ticker]
         curr_row = self.ticker_df_curr_row[self.curr_ticker]
         train_df = ticker_df.iloc[curr_row:curr_row + self.feature_series_count]
+
+        # TODO: Remove this temp code
+        if len(train_df) < 30:
+            print("Should never hit this - {} - {}".format(train_df['date'], train_df['ticker']))
 
         # get data for ml
         feature_matrix = train_df.as_matrix(columns=dml.get_feature_columns())

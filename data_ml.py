@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import data_universe as du
 from utils import timing
-import datetime
+
 
 _label_dir = "\\data\\labels\\"
 _feature_dir = "\\data\\features\\"
@@ -14,7 +14,7 @@ _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
 _forecast_days = 20  # numbers of days in the future to train on
 _forecast_buy_threshold = 4  # train for positive results above this percent return
-_forecast_sell_threshold = -2  # train for positive results below this percent return
+_forecast_sell_threshold = -3  # train for positive results below this percent return
 _forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
@@ -172,7 +172,7 @@ def calc_ml_data():
 
         # Let people know how long this might take...
         if int(percent_done*100) % 5 == 0:
-            print("   {0:.0f}% done...".format(percent_done * 100))
+            print("   --- {0:0.0f}% DONE ---".format(percent_done * 100))
 
         # check if we have enough history to calc year high / low
         if len(sub_df) <= _business_days_in_a_year:
@@ -191,6 +191,7 @@ def calc_ml_data():
                 year_high = max(year_adj_close)
                 curr_row = year_df.iloc[-1]
                 prev_row = year_df.iloc[-2]
+                two_days_ago_row = year_df.iloc[-3]
                 curr_date = curr_row['date']
                 curr_close = curr_row['adj. close']
 
@@ -198,6 +199,7 @@ def calc_ml_data():
                 curr_return_open = curr_close / curr_row['adj. open'] - 1
                 curr_return_high = curr_close / curr_row['adj. high'] - 1
                 curr_return_low = curr_close / curr_row['adj. low'] - 1
+                two_days_ago_return = curr_close / two_days_ago_row['adj. close'] - 1
                 curr_year_high_pct = (curr_close - year_low) / (year_high - year_low)
                 curr_year_low_pct = (year_high - curr_close) / (year_high - year_low)
 
@@ -205,6 +207,10 @@ def calc_ml_data():
                 prev_row = year_df.iloc[-10]  # prev 9 day
                 return_9_day = curr_close / prev_row['adj. close'] - 1
                 ma_9_day = np.asarray(year_df['adj. close'][-10:]).mean() / curr_close - 1
+                past_volumes = np.asarray(year_df['adj. volume'][-10:])
+                volume_high = past_volumes.max()
+                volume_low = past_volumes.min()
+                volume_percent = (curr_row['adj. volume'] - volume_low) / (volume_high - volume_low)
 
                 prev_row = year_df.iloc[-16]
                 return_15_day = curr_close / prev_row['adj. close'] - 1
@@ -222,7 +228,6 @@ def calc_ml_data():
                 ma_60_day = array_60.mean() / curr_close - 1
                 stddev_60 = array_60.std(ddof=1) / curr_close
 
-
                 # print out end of series data for debugging
                 if i > (new_size-5):
                     print('date: {} adj close: {:4.3f} - year high percent: {:3.2f} '
@@ -233,9 +238,7 @@ def calc_ml_data():
                           '30 day rtn: {} 60 day rtn: {}'.format(return_9_day, return_15_day,
                                                                  return_30_day, return_60_day))
 
-                day_num = curr_date.weekday()
-
-                new_values = [ticker, curr_date,
+                new_values = [ticker, curr_date, curr_return, two_days_ago_return, volume_percent,
                               return_9_day, return_15_day, return_30_day, return_60_day,
                               ma_30_day, ma_60_day,
                               curr_year_high_pct, curr_year_low_pct, stddev_30, stddev_60]
@@ -257,7 +260,8 @@ def _get_calc_filename(ticker, extension=".json"):
 
 
 def _create_training_data_frame(df_size):
-    df_label = pd.DataFrame(index=range(df_size), columns=('ticker', 'date', 'buy_label', 'sell_label', 'future_return'))
+    df_label = pd.DataFrame(index=range(df_size), columns=('ticker', 'date',
+                                                           'buy_label', 'sell_label', 'future_return'))
     return df_label
 
 
@@ -270,14 +274,17 @@ def get_label_columns():
 
 
 def get_feature_columns():
-    return ['return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
+    return ['curr_return', 'two_days_ago_return', 'volume_percent',
+            'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
             'ma_30_day', 'ma_60_day',
             'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day']
 
 
+
 def _create_feature_data_frame(df_size):
+    # TODO: use column listings above instead of duplicating strings
     df_features = pd.DataFrame(index=range(df_size),
-                               columns=('ticker', 'date',
+                               columns=('ticker', 'date', 'curr_return', 'two_days_ago_return', 'volume_percent',
                                         'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
                                         'ma_30_day', 'ma_60_day',
                                         'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day'))
@@ -285,8 +292,8 @@ def _create_feature_data_frame(df_size):
 
 
 if __name__ == '__main__':
-    # calc_ml_data()
-    # calc_training_data()
+    calc_ml_data()
+    calc_training_data()
     df = get_all_feature_data()
     print('FEATURE DATA {} rows.'.format(len(df)))
     print(df.describe())

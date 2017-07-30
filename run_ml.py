@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import data_ml as dml
 from utils import timing
 import tensorflow as tf
@@ -11,20 +12,24 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # LSTM Parameters
 learning_rate = 0.001
-epochs = 300000
+epochs = 600000
 display_step = 2000
+save_step = 100000
 label_count = 2
-feature_count = 10
+feature_count = 13
 feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
 hidden_neurons = 512
 last_hidden_neurons = 32
 test_data_date = datetime.datetime(2016, 6, 30)
 
+_prediction_dir = "\\prediction\\"
 _model_dir = "\\model\\"
 _combined_filename = "special.json"
 _cwd = os.getcwd()
 _model_path = _cwd + _model_dir
 _model_file = _model_path + 'findata'
+_prediction_path = _cwd + _prediction_dir
+prediction_file = _prediction_path + _combined_filename
 
 # Target log path
 logs_path = './logs'
@@ -33,6 +38,8 @@ writer = tf.summary.FileWriter(logs_path)
 # ensure paths are there...
 if not os.path.exists(_model_path):
     os.makedirs(_model_path)
+if not os.path.exists(_prediction_path):
+    os.makedirs(_prediction_path)
 
 
 @timing
@@ -111,6 +118,7 @@ def train_rnn(training_data_cls):
         step = 0
         acc_total = 0.0
         cost_total = 0.0
+        cost_df = pd.DataFrame(columns=('iteration', 'cost'))
 
         writer.add_graph(session.graph)
 
@@ -131,8 +139,9 @@ def train_rnn(training_data_cls):
                 print_string += " Iter= " + str(step+1)
                 print_string += " , Average Loss= {:1.4f}".format(cost_total/display_step)
                 print_string += " , Average Accuracy= {:3.2f}%".format(100*acc_total/display_step)
-
                 print(print_string)
+
+                cost_df.loc[-1] = [step+1, cost_total/display_step]
                 acc_total = 0.0
                 cost_total = 0.0
                 ticker = descriptive_df['ticker'].iloc[-1]
@@ -143,6 +152,12 @@ def train_rnn(training_data_cls):
                 print("")
                 # print("outputs_out: {}".format(outputs_out))
             step += 1
+
+            # Save the variables to disk.
+            if (step + 1) % save_step == 0:
+                save_path = saver.save(session, _model_file, global_step=epochs)
+                print("Model saved in file: %s" % save_path)
+
         print("Optimization Finished!")
         print("Run on command line.")
         print("\ttensorboard --logdir=%s" % logs_path)
@@ -150,6 +165,7 @@ def train_rnn(training_data_cls):
 
         # Save the variables to disk.
         save_path = saver.save(session, _model_file, global_step=epochs)
+        cost_df.to_csv(_model_path + "cost.csv")
         print("Model saved in file: %s" % save_path)
 
 
@@ -163,6 +179,9 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     cost_total = 0.0
     buy_accuracy_total = 0.0
     sell_accuracy_total = 0.0
+
+    predictions_df = pd.DataFrame(columns=('date', 'ticker',
+                                           'buy_prediction', 'buy_signal', 'sell_prediction', 'sell_signal'))
 
     while step < test_epochs:
         # get data
@@ -181,27 +200,33 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
         sell_accuracy_total += sell_accuracy
         average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
         acc_total += 1 - min([average_difference, 1])
+
+        # save test predictions
+        ticker = descriptive_df['ticker'].iloc[-1]
+        data_date = descriptive_df['date'].iloc[-1]
+        prediction_row = [ticker, data_date, prediction_out[0][0], label_data[0][0], prediction_out[0][1], label_data[0][1]]
+        predictions_df.loc[-1] = prediction_row
+
         if (step + 1) % test_display_step == 0:
             the_curr_time = datetime.datetime.now().strftime('%X')
             print_string = "Time: {}".format(the_curr_time)
             print_string += " Iter= " + str(step + 1)
             print_string += " , Average Loss= {:1.4f}".format(cost_total / test_display_step)
             print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / test_display_step)
-
             print(print_string)
+
             print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / test_display_step))
             print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / test_display_step))
             acc_total = 0.0
             cost_total = 0.0
             buy_accuracy_total = 0.0
             sell_accuracy_total = 0.0
-            ticker = descriptive_df['ticker'].iloc[-1]
-            data_date = descriptive_df['date'].iloc[-1]
             print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
             print("   Buy  - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
             print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
             print("")
         step += 1
+    predictions_df.to_csv(prediction_file)
     print("Testing Finished!")
 
 

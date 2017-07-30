@@ -50,12 +50,13 @@ def update_all_price_caches():
 
 
 def _get_tickerlist():
+    num_tickers = 510
     # snp_list = []
     with open(_data_path + 'universe.txt', 'rt', encoding='utf-8') as f:
         snp_list = [x.strip('\n') for x in f]
-    print("Got tickers... Top 200: ")
-    print(snp_list[:200])
-    return snp_list[:200]
+    print("Got tickers... Top {}: ".format(num_tickers))
+    print(snp_list[:num_tickers])
+    return snp_list[:num_tickers]
 
 
 def update_price_cache(ticker):
@@ -91,8 +92,8 @@ def update_price_cache(ticker):
             # not sure if this date formatting will be reversible on load...
             sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
             # Don't want data before 1970 - timestamps don't work before then...
-            # But really... I don't want anything older than 1998 i reckon... vastly different trading behaviors
-            if year > 1998:
+            # But really... I don't want anything older than 2006 i reckon... vastly different trading behaviors
+            if year > 2006:
                 with open(_create_filename(ticker, year, month), 'wt') as f:
                         f.write(sub_data.to_json())
 
