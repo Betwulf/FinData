@@ -155,7 +155,7 @@ def train_rnn(training_data_cls):
 
             # Save the variables to disk.
             if (step + 1) % save_step == 0:
-                save_path = saver.save(session, _model_file, global_step=epochs)
+                save_path = saver.save(session, _model_file, global_step=step+1)
                 print("Model saved in file: %s" % save_path)
 
         print("Optimization Finished!")

@@ -104,7 +104,6 @@ def _get_aggregated_data(a_path):
     # process munged data
     ttl_data.reset_index(drop=True, inplace=True)
 
-    # CSV for debugging use only
     with open(a_path + _combined_filename, 'wt', encoding='utf-8') as f:
         f.write(ttl_data.to_json())
     return ttl_data
