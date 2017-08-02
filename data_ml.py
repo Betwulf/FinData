@@ -14,7 +14,7 @@ _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
 _forecast_days = 20  # numbers of days in the future to train on
 _forecast_buy_threshold = 4  # train for positive results above this percent return
-_forecast_sell_threshold = -3  # train for positive results below this percent return
+_forecast_sell_threshold = -4  # train for positive results below this percent return
 _forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
@@ -131,7 +131,7 @@ def get_all_ml_data():
 
 
 @timing
-def calc_training_data():
+def calc_label_data():
     """ Generates ml label data by calculating future returns off of daily prices """
     # for each ticker, sort and process label data for ml training
     for ticker, sub_df, percent_done in ticker_data():
@@ -164,7 +164,7 @@ def calc_training_data():
 
 
 @timing
-def calc_ml_data():
+def calc_feature_data():
     """ Generates ml data by calculating specific values off of daily prices """
     # for each ticker, sort and process calculated data for ml
     for ticker, sub_df, percent_done in ticker_data():
@@ -291,8 +291,8 @@ def _create_feature_data_frame(df_size):
 
 
 if __name__ == '__main__':
-    calc_ml_data()
-    calc_training_data()
+    # calc_feature_data()
+    calc_label_data()
     df = get_all_feature_data()
     print('FEATURE DATA {} rows.'.format(len(df)))
     print(df.describe())

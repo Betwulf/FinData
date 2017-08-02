@@ -19,8 +19,8 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
     print("Starting Simulation... time: {}".format(the_curr_time))
 
     print_string = "   params - "
-    print_string += " from: " + start_date
-    print_string += " to: " + start_date
+    print_string += " from: " + start_date.strftime('%X')
+    print_string += " to: " + start_date.strftime('%X')
     print_string += " , buy thresh= {:1.4f}".format(buy_threshold)
     print_string += " , sell thresh= {:1.4f".format(sell_threshold)
     print_string += " , diff thresh= {:1.4f".format(difference_threshold)
@@ -52,20 +52,27 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
     new_positions_df = pd.DataFrame(columns=_get_position_columns())
     curr_cash = start_cash
     old_date = None
+    curr_buys = 0
+    curr_sells = 0
 
     for index, row in prediction_price_df.iterrows():
         buy_prediction = row['buy_prediction']
         sell_prediction = row['sell_prediction']
         curr_ticker = row['ticker']
         curr_date = row['date']
+
+        print(" {} - {} ({}, {})".format(curr_date, curr_ticker, buy_prediction, sell_prediction))
+
+        # initial setup for old_date
         if old_date is None:
             old_date = curr_date
-        print(" {} - {} ({}, {})".format(row['date'], row['ticker'], buy_prediction, sell_prediction))
 
         # check to see if the date is rolling forward
         if curr_date > old_date:
             old_date = curr_date
             # set quantities for transactions, save them to the main set, and clear temp set
+            new_position_count = len(old_positions_df) + curr_buys - curr_sells
+            curr_total_value = old_positions_df['value'].sum()
             # create positions for yesterday, save them to main set, set old_positions
 
         is_buy = False
@@ -82,13 +89,16 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
         if len(owned_df) > 0:
             # If we already own it, go through this logic
             if is_sell:
-                # create a transaction
+                # create a sell transaction
                 new_transaction = [curr_ticker, curr_date, row['price'], 0.0, trx_cost, 0.0, False, True]
                 curr_transactions_df.loc[-1] = new_transaction
+                curr_sells += 1
         elif is_buy:
             # don't own any and signal is a buy...
+            # create a buy transaction
             new_transaction = [curr_ticker, curr_date, row['price'], 0.0, trx_cost, 0.0, True, False]
             curr_transactions_df.loc[-1] = new_transaction
+            curr_buys += 1
 
 
 def _get_transaction_columns():
@@ -101,7 +111,7 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    simulate(100000, a_start_date, datetime.date.today(), 0.6, 0.5, 0.4, 0.0, rml.prediction_file)
+    simulate(100000, a_start_date, datetime.date.today(), 0.6, 0.6, 0.4, 0.0, rml.prediction_file)
 
 
 

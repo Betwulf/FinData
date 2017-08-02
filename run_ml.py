@@ -10,18 +10,23 @@ import training_data as td
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# LSTM Parameters
+# LSTM Input / Output Parameters
+feature_count = len(dml.get_feature_columns())
+label_count = len(dml.get_label_columns())
+
+# TODO: Turn these into parameters for training
 learning_rate = 0.001
-epochs = 600000
-display_step = 2000
+epochs = 500000
+display_step = 4000
 save_step = 100000
-label_count = 2
-feature_count = 13
+test_data_date = datetime.datetime(2016, 6, 30)
+
+# Parameters for LSTM Shape
 feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
 hidden_neurons = 512
 last_hidden_neurons = 32
-test_data_date = datetime.datetime(2016, 6, 30)
 
+# File parameters
 _prediction_dir = "\\prediction\\"
 _model_dir = "\\model\\"
 _combined_filename = "special.json"
@@ -141,7 +146,7 @@ def train_rnn(training_data_cls):
                 print_string += " , Average Accuracy= {:3.2f}%".format(100*acc_total/display_step)
                 print(print_string)
 
-                cost_df.loc[-1] = [step+1, cost_total/display_step]
+                cost_df.loc[cost_df.shape[0]] = [step+1, cost_total/display_step]
                 acc_total = 0.0
                 cost_total = 0.0
                 ticker = descriptive_df['ticker'].iloc[-1]
@@ -196,8 +201,8 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                            ((0, 1)[prediction_out[0][0] > buy_threshold]))
         sell_accuracy = abs(((0, 1)[label_data[0][1] > sell_threshold]) -
                             ((0, 1)[prediction_out[0][1] > sell_threshold]))
-        buy_accuracy_total += buy_accuracy
-        sell_accuracy_total += sell_accuracy
+        buy_accuracy_total += (1 - buy_accuracy)
+        sell_accuracy_total += (1 - sell_accuracy)
         average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
         acc_total += 1 - min([average_difference, 1])
 
@@ -205,7 +210,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
         ticker = descriptive_df['ticker'].iloc[-1]
         data_date = descriptive_df['date'].iloc[-1]
         prediction_row = [ticker, data_date, prediction_out[0][0], label_data[0][0], prediction_out[0][1], label_data[0][1]]
-        predictions_df.loc[-1] = prediction_row
+        predictions_df.loc[predictions_df.shape[0]] = prediction_row
 
         if (step + 1) % test_display_step == 0:
             the_curr_time = datetime.datetime.now().strftime('%X')
@@ -232,18 +237,26 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
 
 if __name__ == '__main__':
 
-    # get the dataframe, this may be a lot of data....
+    # GET DATA
     data_df = dml.get_all_ml_data()
-    training_df = data_df[data_df.date < test_data_date]
-    test_df = data_df[data_df.date >= test_data_date]
+    training_df = data_df[data_df.date < test_data_date].copy()
+    test_df = data_df[data_df.date >= test_data_date].copy()
+    oh_eight_start_date = datetime.datetime(2008, 1, 1)
+    oh_eight_end_date = datetime.datetime(2008, 12, 31)
+    test_oh_eight_df = data_df[(oh_eight_start_date <= data_df.date) & (data_df.date <= oh_eight_end_date)].copy()
     del data_df
 
-    training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
-    train_rnn(training_data_class)
-    testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
-    test_rnn(testing_data_class, 4000, 500, 0.6, 0.5)
+    # TRAIN
+    # training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    # train_rnn(training_data_class)
 
-    prompt = "Hit enter to finish."
-    sentence = input(prompt)
+    # TEST
+    testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
+    test_rnn(testing_data_class, 6000, 6000, 0.6, 0.6)
+    testing_oh_eight_data_class = td.TrainingData(test_oh_eight_df, feature_series_count, feature_count, label_count)
+    test_rnn(testing_oh_eight_data_class, 6000, 6000, 0.6, 0.6)
+
+    # prompt = "Hit enter to finish."
+    # sentence = input(prompt)
 
 

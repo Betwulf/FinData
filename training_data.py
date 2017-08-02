@@ -13,12 +13,15 @@ class TrainingData:
         self.label_count = label_count
         self.data_df = data_df
         self.tickers = list({t for t in data_df['ticker']})
+        self.tickers.sort()
         self.ticker_count = len(self.tickers)
         self.curr_ticker = 0
 
         self.tickers_df_list = []
         for ticker_num in range(self.ticker_count):
-            ticker_df = data_df[data_df.ticker == self.tickers[ticker_num]]
+            ticker_df = data_df[data_df.ticker == self.tickers[ticker_num]].copy()
+            ticker_df.sort_values('date', inplace=True)
+            ticker_df.reset_index(drop=True, inplace=True)
             if len(ticker_df) < feature_series_count:
                 print("not enough data - {} - {}".format(ticker_df['date'], ticker_df['ticker']))
                 self.ticker_count = self.ticker_count - 1
