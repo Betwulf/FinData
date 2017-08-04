@@ -86,7 +86,7 @@ def _get_aggregated_data(a_path):
         with open(a_path + _combined_filename, 'rt') as f:
             all_data = pd.read_json(f)
             # convert datetime column
-            all_data['date'].apply(pd.to_datetime)
+            all_data['date'].apply(pd.to_datetime)  # TODO: THIS returns the modified column.. test the fix
             return all_data
     print('latest file found: {}'.format(latest_file))
     print('Reading raw price files...')
@@ -99,7 +99,7 @@ def _get_aggregated_data(a_path):
                 ttl_data = pd.concat([current_data, ttl_data])
 
     # convert datetime column
-    ttl_data['date'].apply(pd.to_datetime)
+    ttl_data['date'].apply(pd.to_datetime) # TODO: THIS returns the modified column.. test the fix
 
     # process munged data
     ttl_data.reset_index(drop=True, inplace=True)

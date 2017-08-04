@@ -23,7 +23,7 @@ class TrainingData:
             ticker_df.sort_values('date', inplace=True)
             ticker_df.reset_index(drop=True, inplace=True)
             if len(ticker_df) < feature_series_count:
-                print("not enough data - {} - {}".format(ticker_df['date'], ticker_df['ticker']))
+                print("not enough data - {} - {}".format(ticker_df['date'][0], ticker_df['ticker'][0]))
                 self.ticker_count = self.ticker_count - 1
             else:
                 self.tickers_df_list.append(ticker_df)

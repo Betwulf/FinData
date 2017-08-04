@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
-    test_rnn(testing_data_class, 18000, 6000, 0.6, 0.6)
+    test_rnn(testing_data_class, 200000, 200000, 0.6, 0.6)
     # testing_oh_eight_data_class = td.TrainingData(test_oh_eight_df, feature_series_count, feature_count, label_count)
     # test_rnn(testing_oh_eight_data_class, 6000, 6000, 0.6, 0.6)
 
