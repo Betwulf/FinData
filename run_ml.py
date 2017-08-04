@@ -180,6 +180,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     session, x, y, prediction, cost = restore_rnn()
 
     step = 0
+    curr_display_steps = 0
     acc_total = 0.0
     cost_total = 0.0
     buy_accuracy_total = 0.0
@@ -190,7 +191,20 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
 
     while step < test_epochs:
         # get data
-        feature_data, label_data, descriptive_df = testing_data_cls.get_next_training_data()
+        feature_data, label_data, descriptive_df = testing_data_cls.get_next_training_data(until_exhausted=True)
+
+        if feature_data is None:
+            print(" --- Data Exhausted --- ")
+            the_curr_time = datetime.datetime.now().strftime('%X')
+            print_string = "Time: {}".format(the_curr_time)
+            print_string += " Iter= " + str(step + 1)
+            print_string += " , Average Loss= {:1.4f}".format(cost_total / curr_display_steps)
+            print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / curr_display_steps)
+            print(print_string)
+
+            print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / curr_display_steps))
+            print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / curr_display_steps))
+            break
 
         # Run the Optimizer
         cost_out, prediction_out = session.run([cost, prediction],
@@ -226,11 +240,13 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
             cost_total = 0.0
             buy_accuracy_total = 0.0
             sell_accuracy_total = 0.0
+            curr_display_steps = -1
             print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
             print("   Buy  - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
             print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
             print("")
         step += 1
+        curr_display_steps += 1
     predictions_df.to_csv(prediction_file)
     print("Testing Finished!")
 
@@ -241,20 +257,20 @@ if __name__ == '__main__':
     data_df = dml.get_all_ml_data()
     training_df = data_df[data_df.date < test_data_date].copy()
     test_df = data_df[data_df.date >= test_data_date].copy()
-    oh_eight_start_date = datetime.datetime(2008, 1, 1)
-    oh_eight_end_date = datetime.datetime(2008, 12, 31)
-    test_oh_eight_df = data_df[(oh_eight_start_date <= data_df.date) & (data_df.date <= oh_eight_end_date)].copy()
+    # oh_eight_start_date = datetime.datetime(2008, 1, 1)
+    # oh_eight_end_date = datetime.datetime(2008, 12, 31)
+    # test_oh_eight_df = data_df[(oh_eight_start_date <= data_df.date) & (data_df.date <= oh_eight_end_date)].copy()
     del data_df
 
     # TRAIN
-    training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
-    train_rnn(training_data_class)
+    # training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    # train_rnn(training_data_class)
 
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
-    test_rnn(testing_data_class, 6000, 6000, 0.6, 0.6)
-    testing_oh_eight_data_class = td.TrainingData(test_oh_eight_df, feature_series_count, feature_count, label_count)
-    test_rnn(testing_oh_eight_data_class, 6000, 6000, 0.6, 0.6)
+    test_rnn(testing_data_class, 18000, 6000, 0.6, 0.6)
+    # testing_oh_eight_data_class = td.TrainingData(test_oh_eight_df, feature_series_count, feature_count, label_count)
+    # test_rnn(testing_oh_eight_data_class, 6000, 6000, 0.6, 0.6)
 
     # prompt = "Hit enter to finish."
     # sentence = input(prompt)

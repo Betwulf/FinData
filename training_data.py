@@ -30,9 +30,7 @@ class TrainingData:
 
         self.ticker_df_curr_row = np.zeros(self.ticker_count, dtype=np.int)
 
-
-
-    def get_next_training_data_2(self):
+    def get_next_training_data_2(self, until_exhausted):
         # Get random ticker
         tickers = list({t for t in self.data_df['ticker']})
         rnd_ticker_num = np.random.randint(0, len(tickers))
@@ -51,10 +49,11 @@ class TrainingData:
         descriptive_df = train_df.drop(dml.get_feature_columns(), axis=1)
         return feature_shaped, label_array, descriptive_df
 
-
-    def get_next_training_data(self):
+    def get_next_training_data(self, until_exhausted=False):
         # if we have used up all data possible, then reset and reuse training data
         if self.ticker_df_curr_row.sum() == -self.ticker_count:
+            if until_exhausted:
+                return None, None, None
             print("Used up all the training labels, resetting...")
             self.ticker_df_curr_row = np.zeros(self.ticker_count, dtype=np.int)
             self.curr_ticker = 0
