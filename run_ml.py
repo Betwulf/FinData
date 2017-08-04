@@ -209,7 +209,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
         # save test predictions
         ticker = descriptive_df['ticker'].iloc[-1]
         data_date = descriptive_df['date'].iloc[-1]
-        prediction_row = [ticker, data_date, prediction_out[0][0], label_data[0][0], prediction_out[0][1], label_data[0][1]]
+        prediction_row = [data_date, ticker, prediction_out[0][0], label_data[0][0], prediction_out[0][1], label_data[0][1]]
         predictions_df.loc[predictions_df.shape[0]] = prediction_row
 
         if (step + 1) % test_display_step == 0:
@@ -247,8 +247,8 @@ if __name__ == '__main__':
     del data_df
 
     # TRAIN
-    # training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
-    # train_rnn(training_data_class)
+    training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    train_rnn(training_data_class)
 
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)

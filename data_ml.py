@@ -291,7 +291,7 @@ def _create_feature_data_frame(df_size):
 
 
 if __name__ == '__main__':
-    # calc_feature_data()
+    calc_feature_data()
     calc_label_data()
     df = get_all_feature_data()
     print('FEATURE DATA {} rows.'.format(len(df)))
