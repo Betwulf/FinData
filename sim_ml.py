@@ -133,6 +133,9 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
             new_positions_df.loc[new_positions_df.shape[0]] = new_position
 
             # clean up
+            curr_buys = []
+            curr_sells = []
+            curr_rebalances = []
             positions_df = pd.concat([positions_df, new_positions_df])
             old_positions_df = new_positions_df
             old_date = curr_date

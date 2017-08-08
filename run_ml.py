@@ -29,12 +29,13 @@ last_hidden_neurons = 32
 # File parameters
 _prediction_dir = "\\prediction\\"
 _model_dir = "\\model\\"
+_prediction_filename = "predictions.csv"
 _combined_filename = "special.json"
 _cwd = os.getcwd()
 _model_path = _cwd + _model_dir
 _model_file = _model_path + 'findata'
 _prediction_path = _cwd + _prediction_dir
-prediction_file = _prediction_path + _combined_filename
+prediction_file = _prediction_path + _prediction_filename
 
 # Target log path
 logs_path = './logs'
