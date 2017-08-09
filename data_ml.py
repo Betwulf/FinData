@@ -175,6 +175,14 @@ def calc_feature_data():
     # for each ticker, sort and process calculated data for ml
     for ticker, sub_df, percent_done in ticker_data():
 
+        # add EMA to the ticker data
+        ema_12_column_name = "ema_12"
+        ema_26_column_name = "ema_26"
+        ema_12 = pd.ewma(sub_df['adj. close'], span=12)
+        ema_26 = pd.ewma(sub_df['adj. close'], span=26)
+        sub_df[ema_12_column_name] = ema_12
+        sub_df[ema_26_column_name] = ema_26
+
         # Let people know how long this might take...
         if int(percent_done*100) % 5 == 0:
             print("   --- {0:0.0f}% DONE ---".format(percent_done * 100))
@@ -201,6 +209,7 @@ def calc_feature_data():
                 curr_close = curr_row['adj. close']
 
                 curr_return = curr_close / prev_row['adj. close'] - 1
+                year_return = curr_close / year_df.iloc[0]['adj. close'] - 1
                 curr_return_open = curr_close / curr_row['adj. open'] - 1
                 curr_return_high = curr_close / curr_row['adj. high'] - 1
                 curr_return_low = curr_close / curr_row['adj. low'] - 1
@@ -216,6 +225,7 @@ def calc_feature_data():
                 volume_high = past_volumes.max()
                 volume_low = past_volumes.min()
                 volume_percent = (curr_row['adj. volume'] - volume_low) / (volume_high - volume_low)
+                volume_deviation = np.asarray(year_df['adj. volume']).std(ddof=1) / curr_row['adj. volume']
 
                 prev_row = year_df.iloc[-16]
                 return_15_day = curr_close / prev_row['adj. close'] - 1
@@ -233,20 +243,25 @@ def calc_feature_data():
                 ma_60_day = array_60.mean() / curr_close - 1
                 stddev_60 = array_60.std(ddof=1) / curr_close
 
-                # print out end of series data for debugging
-                if i > (new_size-5):
-                    print('date: {} adj close: {:4.3f} - year high percent: {:3.2f} '
-                          'low: {:3.2f}'.format(curr_date,
-                                                curr_close, curr_year_high_pct, curr_year_low_pct))
-                    print('   high: {} low: {} '.format(year_high, year_low))
-                    print('   9 day rtn: {} 15 day rtn: {} '
-                          '30 day rtn: {} 60 day rtn: {}'.format(return_9_day, return_15_day,
-                                                                 return_30_day, return_60_day))
+                stddev_year = np.asarray(year_df['adj. close']).std(ddof=1) / curr_close
+                macd_12 = np.asarray(year_df[ema_12_column_name][-9:])
+                macd_26 = np.asarray(year_df[ema_26_column_name][-9:])
+                macd_diff = macd_12 - macd_26
+                macd = (macd_diff[-1] - macd_diff.mean()) / curr_close
 
-                new_values = [ticker, curr_date, curr_return, two_days_ago_return, volume_percent,
-                              return_9_day, return_15_day, return_30_day, return_60_day,
-                              ma_30_day, ma_60_day,
-                              curr_year_high_pct, curr_year_low_pct, stddev_30, stddev_60]
+                # print out end of series data for debugging
+                if i > (new_size-3):
+                    print('date: {} adj close: {:4.3f} - year high: {:3.2f} '
+                          'macd: {:1.3f}'.format(curr_date.strftime('%x'),
+                                                curr_close, curr_year_high_pct, macd))
+                    print('   volume %: {:1.3f} volume stddev: {:1.3f} '.format(volume_percent, volume_deviation))
+                    print('   9 day rtn: {:1.3f} stddev 60: {:1.3f} '
+                          'stddev yr: {:1.3f} MA 60 day: {:1.3f}'.format(return_9_day, stddev_60,
+                                                                          stddev_year, ma_60_day))
+
+                new_values = [ticker, curr_date, curr_return, year_return, volume_percent, volume_deviation,
+                              return_60_day, ma_30_day, ma_60_day, macd,
+                              curr_year_high_pct, stddev_30, stddev_60, stddev_year]
 
                 new_df.loc[i] = new_values
 
@@ -279,19 +294,19 @@ def get_label_columns():
 
 
 def get_feature_columns():
-    return ['curr_return', 'two_days_ago_return', 'volume_percent',
-            'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
-            'ma_30_day', 'ma_60_day',
-            'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day']
+    return ['curr_return', 'year_return', 'volume_percent', 'volume_deviation',
+            'return_60_day', 'ma_30_day', 'ma_60_day', 'macd',
+            'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year']
+
+
+def _get_feature_dataframe_columns():
+    return get_descriptive_columns() + get_feature_columns()
 
 
 def _create_feature_data_frame(df_size):
     # TODO: use column listings above instead of duplicating strings
     df_features = pd.DataFrame(index=range(df_size),
-                               columns=('ticker', 'date', 'curr_return', 'two_days_ago_return', 'volume_percent',
-                                        'return_9_day', 'return_15_day', 'return_30_day', 'return_60_day',
-                                        'ma_30_day', 'ma_60_day',
-                                        'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day'))
+                               columns=(_get_feature_dataframe_columns()))
     return df_features
 
 
