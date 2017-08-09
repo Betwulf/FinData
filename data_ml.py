@@ -12,9 +12,9 @@ _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 20  # numbers of days in the future to train on
-_forecast_buy_threshold = 4  # train for positive results above this percent return
-_forecast_sell_threshold = -4  # train for positive results below this percent return
+_forecast_days = 10  # numbers of days in the future to train on
+_forecast_buy_threshold = 3  # train for positive results above this percent return
+_forecast_sell_threshold = -3  # train for positive results below this percent return
 _forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
@@ -38,6 +38,12 @@ def adjusted_double_sigmoid(x, target_value, slope):
         x = -50  # prevents overflow in exp.
     return (1 / (1 + np.exp((-4.0 / slope) * (x - target_value)))) + \
            (1 / (1 + np.exp((-4.0 / slope) * (x + target_value)))) - 1
+
+
+def step(x, target_value, greater_than):
+    if greater_than:
+        return (0, 1)[x >= target_value]
+    return (0, 1)[x <= target_value]
 
 
 def sigmoid(x, target_value, slope):
@@ -154,8 +160,8 @@ def calc_label_data():
                 future_return = (future_close/curr_close - 1)*100
 
                 # Try shaping the label more smoothly
-                buy_label = sigmoid(future_return, _forecast_buy_threshold, _forecast_slope)
-                sell_label = 1 - sigmoid(future_return, _forecast_sell_threshold, _forecast_slope)
+                buy_label = step(future_return, _forecast_buy_threshold, True)
+                sell_label = 1 - step(future_return, _forecast_sell_threshold, False)
 
                 label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
                 new_df.loc[i] = label_row_values
@@ -279,7 +285,6 @@ def get_feature_columns():
             'year_high_percent', 'year_low_percent', 'stddev_30_day', 'stddev_60_day']
 
 
-
 def _create_feature_data_frame(df_size):
     # TODO: use column listings above instead of duplicating strings
     df_features = pd.DataFrame(index=range(df_size),
@@ -290,7 +295,7 @@ def _create_feature_data_frame(df_size):
     return df_features
 
 
-if __name__ == '__main__':
+def calc_all():
     calc_feature_data()
     calc_label_data()
     df = get_all_feature_data()
@@ -302,3 +307,7 @@ if __name__ == '__main__':
     df = get_all_ml_data()
     print('COMBINED DATA {} rows.'.format(len(df)))
     print(df.describe())
+
+
+if __name__ == '__main__':
+    calc_all()

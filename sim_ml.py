@@ -27,13 +27,15 @@ def add_a_day(a_date):
 
 
 @timing
-def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, difference_threshold, max_position_percent, trx_cost, prediction_file):
+def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, difference_threshold,
+             max_position_percent, trx_cost, prediction_file):
     the_curr_time = datetime.datetime.now().strftime('%X')
     print("Starting Simulation... time: {}".format(the_curr_time))
 
     print_string = "   params - "
-    print_string += " from: " + start_date.strftime('%x')
-    print_string += " to: " + end_date.strftime('%x')
+    print_string += " DATE: " + start_date.strftime('%x')
+    print_string += " - " + end_date.strftime('%x')
+    print_string += " : fees= {:2.2f}".format(trx_cost)
 
     print(print_string)
 
@@ -41,13 +43,12 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
     print_string += " , buy thresh= {:1.2f}".format(buy_threshold)
     print_string += " , sell thresh= {:1.2f}".format(sell_threshold)
     print_string += " , diff thresh= {:1.2f}".format(difference_threshold)
-    print_string += " , fees= {:2.2f}".format(trx_cost)
 
     print(print_string)
 
     # get the data frame, this may be a lot of data....
     prices_df = du.get_all_prices()
-    with open(rml.prediction_file, 'rt', encoding='utf-8') as f:
+    with open(prediction_file, 'rt', encoding='utf-8') as f:
         predictions_df = pd.read_csv(f)
 
     # convert datetime column
@@ -78,8 +79,6 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
         sell_prediction = row['sell_prediction']
         curr_ticker = row['ticker']
         curr_date = row['date']
-
-        # print(" {} - {}  \t( buy:{:1.2f}, sell:{:1.2f} )".format(curr_date.strftime('%x'), curr_ticker, buy_prediction, sell_prediction))
 
         # initial setup for old_date
         if old_date is None:
@@ -121,12 +120,15 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
 
             # sell dying tickers
             for a_ticker, a_price in curr_sells:
-                sell_quantity = target_position_value/a_price
-                ttl_trx_cost = -target_position_value - trx_cost
-                new_transaction = [a_ticker, curr_date, a_price, sell_quantity,
+                a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
+                if len(a_row_df) == 0:
+                    print("what?")
+                old_quantity = a_row_df['quantity'][0]
+                ttl_trx_cost = - a_price*old_quantity - trx_cost
+                new_transaction = [a_ticker, curr_date, a_price, old_quantity,
                                    trx_cost, ttl_trx_cost, False, True, False]
                 transactions_df.loc[transactions_df.shape[0]] = new_transaction
-                curr_cash += target_position_value - trx_cost
+                curr_cash += a_price*old_quantity - trx_cost
 
             # Add cash as a position
             new_position = ['$', curr_date, curr_cash, 1, curr_cash, 0]
@@ -142,8 +144,8 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
 
         is_buy = False
         is_sell = False
-        if sell_prediction > buy_prediction:
-            buy_prediction = 0.0
+        # if sell_prediction > buy_prediction:
+        #     buy_prediction = 0.0
         if (buy_prediction > (sell_prediction + difference_threshold)) and buy_prediction > buy_threshold:
             is_buy = True
             sell_prediction = 0.0
@@ -182,4 +184,4 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    simulate(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, 0.4, 0.05, 0.0, rml.prediction_file)
+    simulate(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 0.05, 0.0, rml.prediction_file)

@@ -252,28 +252,21 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     print("Testing Finished!")
 
 
-if __name__ == '__main__':
-
+def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold):
     # GET DATA
     data_df = dml.get_all_ml_data()
     training_df = data_df[data_df.date < test_data_date].copy()
     test_df = data_df[data_df.date >= test_data_date].copy()
-    # oh_eight_start_date = datetime.datetime(2008, 1, 1)
-    # oh_eight_end_date = datetime.datetime(2008, 12, 31)
-    # test_oh_eight_df = data_df[(oh_eight_start_date <= data_df.date) & (data_df.date <= oh_eight_end_date)].copy()
     del data_df
 
     # TRAIN
-    # training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
-    # train_rnn(training_data_class)
+    training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    train_rnn(training_data_class)
 
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
-    test_rnn(testing_data_class, 200000, 200000, 0.6, 0.6)
-    # testing_oh_eight_data_class = td.TrainingData(test_oh_eight_df, feature_series_count, feature_count, label_count)
-    # test_rnn(testing_oh_eight_data_class, 6000, 6000, 0.6, 0.6)
-
-    # prompt = "Hit enter to finish."
-    # sentence = input(prompt)
+    test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
 
 
+if __name__ == '__main__':
+    get_data_train_and_test_rnn(200000, 200000, 0.6, 0.6)
