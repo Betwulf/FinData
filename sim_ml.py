@@ -26,11 +26,11 @@ def add_a_day(a_date):
     return a_date + datetime.timedelta(days=1)
 
 
-@timing
-def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, difference_threshold,
-             max_position_percent, trx_cost, prediction_file):
+def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold, difference_threshold,
+                 max_position_percent, trx_cost, prediction_file):
+
     the_curr_time = datetime.datetime.now().strftime('%X')
-    print("Starting Simulation... time: {}".format(the_curr_time))
+    print("Starting All Simulations... time: {}".format(the_curr_time))
 
     print_string = "   params - "
     print_string += " DATE: " + start_date.strftime('%x')
@@ -48,22 +48,37 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
 
     # get the data frame, this may be a lot of data....
     prices_df = du.get_all_prices()
+    # convert datetime column
+    prices_df['date'] = prices_df['date'].apply(pd.to_datetime)
+
+    # get the data frame, this may be a lot of data....
     with open(prediction_file, 'rt', encoding='utf-8') as f:
         predictions_df = pd.read_csv(f)
 
-    # convert datetime column
-    prices_df['date'] = prices_df['date'].apply(pd.to_datetime)
-    predictions_df['date'] = predictions_df['date'].apply(pd.to_datetime)
+    model_file_list = {predictions_df['model_file'].values}
 
-    # predictions can create transactions based off of the prices for the next day...
-    # so adjust the days of the predictions to be applied to the next days' prices
-    predictions_df['date'] = predictions_df['date'].apply(add_a_day)
+    for model_file in model_file_list:
+        model_predictions_df = predictions_df[predictions_df.model_file == model_file].copy()
+        # convert datetime column
+        model_predictions_df['date'] = model_predictions_df['date'].apply(pd.to_datetime)
 
-    prediction_price_df = pd.merge(prices_df, predictions_df, how='inner', on=['date', 'ticker'])
-    prediction_price_df = prediction_price_df[(start_date <= prediction_price_df.date) &
-                                              (prediction_price_df.date <= end_date)].copy()
-    prediction_price_df.sort_values('date', inplace=True)
-    prediction_price_df.reset_index(drop=True, inplace=True)
+        # predictions can create transactions based off of the prices for the next day...
+        # so adjust the days of the predictions to be applied to the next days' prices
+        model_predictions_df['date'] = model_predictions_df['date'].apply(add_a_day)
+
+        prediction_price_df = pd.merge(prices_df, model_predictions_df, how='inner', on=['date', 'ticker'])
+        prediction_price_df = prediction_price_df[(start_date <= prediction_price_df.date) &
+                                                  (prediction_price_df.date <= end_date)].copy()
+        prediction_price_df.sort_values('date', inplace=True)
+        prediction_price_df.reset_index(drop=True, inplace=True)
+
+        simulate(start_cash, buy_threshold, sell_threshold, difference_threshold,
+                 max_position_percent, trx_cost, prediction_price_df)
+
+
+@timing
+def simulate(start_cash, buy_threshold, sell_threshold, difference_threshold,
+             max_position_percent, trx_cost, prediction_price_df):
 
     transactions_df = pd.DataFrame(columns=_get_transaction_columns())
     positions_df = pd.DataFrame(columns=_get_position_columns())
@@ -175,13 +190,13 @@ def simulate(start_cash, start_date, end_date, buy_threshold, sell_threshold, di
 
 
 def _get_transaction_columns():
-    return ['ticker', 'date', 'price', 'quantity', 'fee', 'total_cost', 'buy', 'sell', 'rebalance']
+    return ['model_file', 'ticker', 'date', 'price', 'quantity', 'fee', 'total_cost', 'buy', 'sell', 'rebalance']
 
 
 def _get_position_columns():
-    return ['ticker', 'date', 'price', 'quantity', 'value', 'age']
+    return ['model_file', 'ticker', 'date', 'price', 'quantity', 'value', 'age']
 
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    simulate(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 0.05, 0.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 0.05, 0.0, rml.prediction_file)

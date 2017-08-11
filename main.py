@@ -12,21 +12,33 @@ import data_universe as du
 import data_ml as dm
 import run_ml as rml
 import data_ml as dml
+import sim_ml as sml
 import training_data as td
 
 """ This project uses Quandl - make sure you have an API key to Quandl in order to access their data """
 
-prompt = "Type 1 [ENTER] to calc features and labels\n"
-prompt += "Type 2 [ENTER] to train and test the RNN\n"
-prompt += "Type 3 [ENTER] to calc features and labels, then train and test the RNN\n"
-
+prompt = " --- Fin Data -- \n"
+prompt += "\tType  calc  [ENTER] to calc features and labels\n"
+prompt += "\tType  train [ENTER] to train and test the RNN\n"
+prompt += "\tType  test  [ENTER] to test the RNN\n"
+prompt += "\tType  all   [ENTER] to calc features and labels, then train and test the RNN\n"
+prompt += "\tType  sim   [ENTER] to simulate trading\n"
 sentence = input(prompt)
 
-if "1" in sentence:
+main_buy_threshold = 0.9
+main_sell_threshold = 0.8
+
+if "calc" in sentence:
     dml.calc_all()
-if "2" in sentence:
-    rml.get_data_train_and_test_rnn(200000, 200000, 0.6, 0.6)
-if "3" in sentence:
+if "train" in sentence:
+    rml.get_data_train_and_test_rnn(200000, 200000, main_buy_threshold, main_sell_threshold)
+if "test" in sentence:
+    rml.get_data_and_test_rnn(200000, 200000, main_buy_threshold, main_sell_threshold)
+if "all" in sentence:
     dml.calc_all()
-    rml.get_data_train_and_test_rnn(200000, 200000, 0.6, 0.6)
+    rml.get_data_train_and_test_rnn(200000, 200000, main_buy_threshold, main_sell_threshold)
+if "sim" in sentence:
+    a_start_date = rml.test_data_date
+    sml.simulate_all(100000.0, a_start_date, datetime.date.today(), main_buy_threshold, main_sell_threshold,
+                     -1.4, 0.05, 0.0, rml.prediction_file)
 

@@ -16,14 +16,14 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
-epochs = 500000
-display_step = 4000
+epochs = 1600000
+display_step = 10000
 save_step = 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
 feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
-hidden_neurons = 512
+hidden_neurons = 128
 last_hidden_neurons = 32
 
 # File parameters
@@ -93,14 +93,17 @@ def build_rnn():
     return init, x, y, prediction, cost, optimizer
 
 
+def _get_rnn_model_files():
+    return [_model_path + a_file for a_file in os.listdir(_model_path) if ".meta" in a_file]
+
+
 @timing
-def restore_rnn():
-    file_list = [_model_path + a_file for a_file in os.listdir(_model_path) if ".meta" in a_file]
-    latest_file = max(file_list, key=os.path.getmtime)
-    print("Found file to restore: {}".format(latest_file))
+def restore_rnn(model_file):
+
+    print("RNN model to restore: {}".format(model_file))
 
     session = tf.Session()
-    saver = tf.train.import_meta_graph(latest_file)
+    saver = tf.train.import_meta_graph(model_file)
     saver.restore(session, tf.train.latest_checkpoint(_model_path))
     graph = tf.get_default_graph()
     x = graph.get_tensor_by_name("x:0")
@@ -113,9 +116,11 @@ def restore_rnn():
 
 @timing
 def train_rnn(training_data_cls):
-    print("Start training model...")
+    the_curr_time = datetime.datetime.now().strftime('%X')
+    print_string = "Time: {}".format(the_curr_time)
+    print("Start training model... {}".format(print_string))
     init, x, y, prediction, cost, optimizer = build_rnn()
-    saver = tf.train.Saver()
+    saver = tf.train.Saver(max_to_keep=20)
 
     # Launch the graph
     with tf.Session() as session:
@@ -176,80 +181,90 @@ def train_rnn(training_data_cls):
 
 
 @timing
-def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, sell_threshold):
-    print("Start testing model...")
-    session, x, y, prediction, cost = restore_rnn()
+def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, sell_threshold, latest_only=False):
+    the_curr_time = datetime.datetime.now().strftime('%X')
+    print_string = "Time: {}".format(the_curr_time)
+    print("Start testing model...{}".format(print_string))
 
-    step = 0
-    curr_display_steps = 0
-    acc_total = 0.0
-    cost_total = 0.0
-    buy_accuracy_total = 0.0
-    sell_accuracy_total = 0.0
-
-    predictions_df = pd.DataFrame(columns=('date', 'ticker',
+    predictions_df = pd.DataFrame(columns=('model_file', 'date', 'ticker',
                                            'buy_prediction', 'buy_signal', 'sell_prediction', 'sell_signal'))
 
-    while step < test_epochs:
-        # get data
-        feature_data, label_data, descriptive_df = testing_data_cls.get_next_training_data(until_exhausted=True)
+    file_list = _get_rnn_model_files()
+    if latest_only:
+        file_list = [max(file_list, key=os.path.getmtime)]
+    for each_file in file_list:
+        session, x, y, prediction, cost = restore_rnn(each_file)
 
-        if feature_data is None:
-            print(" --- Data Exhausted --- ")
-            the_curr_time = datetime.datetime.now().strftime('%X')
-            print_string = "Time: {}".format(the_curr_time)
-            print_string += " Iter= " + str(step + 1)
-            print_string += " , Average Loss= {:1.4f}".format(cost_total / curr_display_steps)
-            print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / curr_display_steps)
-            print(print_string)
+        step = 0
+        curr_display_steps = 0
+        acc_total = 0.0
+        cost_total = 0.0
+        buy_accuracy_total = 0.0
+        sell_accuracy_total = 0.0
 
-            print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / curr_display_steps))
-            print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / curr_display_steps))
-            break
+        while step < test_epochs:
+            # get data
+            feature_data, label_data, descriptive_df = testing_data_cls.get_next_training_data(until_exhausted=True)
 
-        # Run the Optimizer
-        cost_out, prediction_out = session.run([cost, prediction],
-                                               feed_dict={x: feature_data, y: label_data[0]})
+            if feature_data is None:
+                print(" --- Data Exhausted --- ")
+                the_curr_time = datetime.datetime.now().strftime('%X')
+                print_string = "Time: {}".format(the_curr_time)
+                print_string += " Iter= " + str(step + 1)
+                print_string += " , Average Loss= {:1.4f}".format(cost_total / curr_display_steps)
+                print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / curr_display_steps)
+                print(print_string)
 
-        cost_total += cost_out
-        buy_accuracy = abs(((0, 1)[label_data[0][0] > buy_threshold]) -
-                           ((0, 1)[prediction_out[0][0] > buy_threshold]))
-        sell_accuracy = abs(((0, 1)[label_data[0][1] > sell_threshold]) -
-                            ((0, 1)[prediction_out[0][1] > sell_threshold]))
-        buy_accuracy_total += (1 - buy_accuracy)
-        sell_accuracy_total += (1 - sell_accuracy)
-        average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
-        acc_total += 1 - min([average_difference, 1])
+                print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / curr_display_steps))
+                print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / curr_display_steps))
+                break
 
-        # save test predictions
-        ticker = descriptive_df['ticker'].iloc[-1]
-        data_date = descriptive_df['date'].iloc[-1]
-        prediction_row = [data_date, ticker, prediction_out[0][0], label_data[0][0], prediction_out[0][1], label_data[0][1]]
-        predictions_df.loc[predictions_df.shape[0]] = prediction_row
+            # Run the Optimizer
+            cost_out, prediction_out = session.run([cost, prediction],
+                                                   feed_dict={x: feature_data, y: label_data[0]})
 
-        if (step + 1) % test_display_step == 0:
-            the_curr_time = datetime.datetime.now().strftime('%X')
-            print_string = "Time: {}".format(the_curr_time)
-            print_string += " Iter= " + str(step + 1)
-            print_string += " , Average Loss= {:1.4f}".format(cost_total / test_display_step)
-            print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / test_display_step)
-            print(print_string)
+            cost_total += cost_out
+            buy_accuracy = abs(((0, 1)[label_data[0][0] > buy_threshold]) -
+                               ((0, 1)[prediction_out[0][0] > buy_threshold]))
+            sell_accuracy = abs(((0, 1)[label_data[0][1] > sell_threshold]) -
+                                ((0, 1)[prediction_out[0][1] > sell_threshold]))
+            buy_accuracy_total += (1 - buy_accuracy)
+            sell_accuracy_total += (1 - sell_accuracy)
+            average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
+            acc_total += 1 - min([average_difference, 1])
 
-            print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / test_display_step))
-            print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / test_display_step))
-            acc_total = 0.0
-            cost_total = 0.0
-            buy_accuracy_total = 0.0
-            sell_accuracy_total = 0.0
-            curr_display_steps = -1
-            print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
-            print("   Buy  - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
-            print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
-            print("")
-        step += 1
-        curr_display_steps += 1
+            # save test predictions
+            ticker = descriptive_df['ticker'].iloc[-1]
+            data_date = descriptive_df['date'].iloc[-1]
+            prediction_row = [each_file, data_date, ticker,
+                              prediction_out[0][0], label_data[0][0], prediction_out[0][1], label_data[0][1]]
+            predictions_df.loc[predictions_df.shape[0]] = prediction_row
+
+            if (step + 1) % test_display_step == 0:
+                the_curr_time = datetime.datetime.now().strftime('%X')
+                print_string = "Time: {}".format(the_curr_time)
+                print_string += " Iter= " + str(step + 1)
+                print_string += " , Average Loss= {:1.4f}".format(cost_total / test_display_step)
+                print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / test_display_step)
+                print(print_string)
+
+                print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / test_display_step))
+                print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / test_display_step))
+                acc_total = 0.0
+                cost_total = 0.0
+                buy_accuracy_total = 0.0
+                sell_accuracy_total = 0.0
+                curr_display_steps = -1
+                print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
+                print("   Buy  - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
+                print("")
+            step += 1
+            curr_display_steps += 1
+        print("{} Testing Finished!".format(each_file))
+    print("Saving Predictions...")
     predictions_df.to_csv(prediction_file)
-    print("Testing Finished!")
+    print("ALL TESTS FINISHED.")
 
 
 def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold):
@@ -268,5 +283,16 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
 
 
+def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold):
+    # GET DATA
+    data_df = dml.get_all_ml_data()
+    test_df = data_df[data_df.date >= test_data_date].copy()
+    del data_df
+
+    # TEST
+    testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
+    test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
+
+
 if __name__ == '__main__':
-    get_data_train_and_test_rnn(200000, 200000, 0.6, 0.6)
+    get_data_train_and_test_rnn(200000, 200000, 0.9, 0.8)

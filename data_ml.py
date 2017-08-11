@@ -12,9 +12,9 @@ _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 10  # numbers of days in the future to train on
-_forecast_buy_threshold = 3  # train for positive results above this percent return
-_forecast_sell_threshold = -3  # train for positive results below this percent return
+_forecast_days = 5  # numbers of days in the future to train on
+_forecast_buy_threshold = 2.8  # train for positive results above this percent return
+_forecast_sell_threshold = -2.8  # train for positive results below this percent return
 _forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
@@ -161,7 +161,7 @@ def calc_label_data():
 
                 # Try shaping the label more smoothly
                 buy_label = step(future_return, _forecast_buy_threshold, True)
-                sell_label = 1 - step(future_return, _forecast_sell_threshold, False)
+                sell_label = step(future_return, _forecast_sell_threshold, False)
 
                 label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
                 new_df.loc[i] = label_row_values
