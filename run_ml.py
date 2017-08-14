@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import pandas as pd
 import data_ml as dml
@@ -47,6 +48,9 @@ if not os.path.exists(_model_path):
 if not os.path.exists(_prediction_path):
     os.makedirs(_prediction_path)
 
+
+def get_prediction_filename(a_model_file):
+    return '{}{}'.format(a_model_file, '.csv')
 
 @timing
 def build_rnn():
@@ -110,7 +114,6 @@ def restore_rnn(model_file):
     y = graph.get_tensor_by_name("y:0")
     prediction = graph.get_tensor_by_name("prediction:0")
     cost = graph.get_tensor_by_name("cost:0")
-
     return session, x, y, prediction, cost
 
 
@@ -181,7 +184,7 @@ def train_rnn(training_data_cls):
 
 
 @timing
-def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, sell_threshold, latest_only=False):
+def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file=None):
     the_curr_time = datetime.datetime.now().strftime('%X')
     print_string = "Time: {}".format(the_curr_time)
     print("Start testing model...{}".format(print_string))
@@ -190,8 +193,11 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                                            'buy_prediction', 'buy_signal', 'sell_prediction', 'sell_signal'))
 
     file_list = _get_rnn_model_files()
-    if latest_only:
+    if specific_file is None:
         file_list = [max(file_list, key=os.path.getmtime)]
+    else:
+        file_list = [specific_file]
+
     for each_file in file_list:
         session, x, y, prediction, cost = restore_rnn(each_file)
 
@@ -262,9 +268,9 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
             step += 1
             curr_display_steps += 1
         print("{} Testing Finished!".format(each_file))
+        print("Saving Predictions...")
+        predictions_df.to_csv(get_prediction_filename(each_file))
         session.close()
-    print("Saving Predictions...")
-    predictions_df.to_csv(prediction_file)
     print("ALL TESTS FINISHED.")
 
 
@@ -284,7 +290,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
 
 
-def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold):
+def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file=None):
     # GET DATA
     data_df = dml.get_all_ml_data()
     test_df = data_df[data_df.date >= test_data_date].copy()
@@ -292,8 +298,13 @@ def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_th
 
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
-    test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
+    test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file)
 
 
 if __name__ == '__main__':
-    get_data_train_and_test_rnn(200000, 200000, 0.9, 0.8)
+    if len(sys.argv) > 2:
+        get_data_and_test_rnn(200000, 200000, 0.9, 0.8, sys.argv[2])
+    elif (len(sys.argv) > 1) & (sys.argv[1] == "test"):
+        get_data_and_test_rnn(200000, 200000, 0.9, 0.8)
+    else:
+        get_data_train_and_test_rnn(200000, 200000, 0.9, 0.8)
