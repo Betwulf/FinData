@@ -262,6 +262,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
             step += 1
             curr_display_steps += 1
         print("{} Testing Finished!".format(each_file))
+        session.close()
     print("Saving Predictions...")
     predictions_df.to_csv(prediction_file)
     print("ALL TESTS FINISHED.")
