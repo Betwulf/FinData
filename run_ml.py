@@ -304,7 +304,8 @@ def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_th
 if __name__ == '__main__':
     if len(sys.argv) > 2:
         get_data_and_test_rnn(200000, 200000, 0.9, 0.8, sys.argv[2])
-    elif (len(sys.argv) > 1) & (sys.argv[1] == "test"):
-        get_data_and_test_rnn(200000, 200000, 0.9, 0.8)
+    elif len(sys.argv) > 1:
+        if sys.argv[1] == "test":
+            get_data_and_test_rnn(200000, 200000, 0.9, 0.8)
     else:
-        get_data_train_and_test_rnn(200000, 200000, 0.9, 0.8)
+        get_data_train_and_test_rnn(100, 10, 0.9, 0.8)

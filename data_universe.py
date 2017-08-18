@@ -8,7 +8,7 @@ from utils import timing
 
 _data_dir = "\\data\\"
 _price_dir = "\\data\\prices\\"
-_combined_price_filename = "__all.json"
+_combined_price_filename = "__all.csv"
 
 _cwd = os.getcwd()
 _data_path = _cwd + _data_dir
@@ -91,14 +91,15 @@ def update_price_cache(ticker):
             sub_data = fin_data[month_first:month_last]
             # not sure if this date formatting will be reversible on load...
             sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
+            sub_data.index.name = 'date'
             # Don't want data before 1970 - timestamps don't work before then...
             # But really... I don't want anything older than 2006 i reckon... vastly different trading behaviors
             if year > 2006:
                 with open(_create_filename(ticker, year, month), 'wt') as f:
-                        f.write(sub_data.to_json())
+                        f.write(sub_data.to_csv())
 
 
-# TODO: Do we need this, or just use __all.json ?
+# TODO: Do we need this, or just use __all.csv ?
 def get_ticker_prices():
     """ returns a dictionary of tickers to their 'pandas' dataframes of prices"""
     snp_list = _get_tickerlist()
@@ -107,7 +108,7 @@ def get_ticker_prices():
         if file_found.find(_combined_price_filename) == -1:
             file_ticker, file_year, file_month = _parse_filename(file_found)
             with open(_price_path + file_found, 'rt') as f:
-                current_data = pd.read_json(f)
+                current_data = pd.read_csv(f)
                 df_dict[file_ticker] = pd.concat([current_data, df_dict[file_ticker]])
     return df_dict
 
@@ -123,18 +124,18 @@ def get_all_prices():
     if latest_file.find(_combined_price_filename) > -1:
         print('Reading cached file: {}'.format(_combined_price_filename))
         with open(_price_path + _combined_price_filename, 'rt') as f:
-            all_data = pd.read_json(f)
+            all_data = pd.read_csv(f)
             return all_data
     print('Reading raw price files...')
     counter = 0
     total_count = len(file_list)
     for file_found in file_list:
-        if (file_found != _price_path + _combined_price_filename) & file_found.endswith('.json'):
+        if (file_found != _price_path + _combined_price_filename) & file_found.endswith('.csv'):
             if counter % int(total_count/20) == 0:
                 print("   {0:.0f}% done...".format((counter/total_count)*100))
             counter += 1
             with open(file_found, 'rt') as f:
-                current_data = pd.read_json(f)
+                current_data = pd.read_csv(f)
                 ttl_data = pd.concat([current_data, ttl_data])
 
     # process munged data
@@ -144,11 +145,11 @@ def get_all_prices():
 
     # Save the file...
     with open(_price_path + _combined_price_filename, 'wt') as f:
-        f.write(ttl_data.to_json())
+        f.write(ttl_data.to_csv())
     return ttl_data
 
 
-def _create_filename(ticker, year, month, extension=".json"):
+def _create_filename(ticker, year, month, extension=".csv"):
     # ticker may have odd symbols that cannot be in a filename like a forward slash
     ticker = ticker.replace('/', '+')
     return (_price_path + ticker + ".{:04d}.{:02d}" + extension).format(year, month)
@@ -177,7 +178,7 @@ def _any_ticker_files(ticker):
     for file_found in file_list:
         file_timestamp = max(file_timestamp,
                              datetime.datetime.fromtimestamp(os.path.getmtime(_price_path + file_found)))
-        if (file_found.find(_combined_price_filename) == -1) & file_found.endswith('.json'):
+        if (file_found.find(_combined_price_filename) == -1) & file_found.endswith('.csv'):
             file_ticker, file_year, file_month = _parse_filename(file_found)
             if file_ticker == ticker:
                 file_date = datetime.date(file_year, file_month, 1)

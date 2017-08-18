@@ -7,14 +7,14 @@ from utils import timing
 
 _label_dir = "\\data\\labels\\"
 _feature_dir = "\\data\\features\\"
-_combined_filename = "special.json"
+_combined_filename = "special.csv"
 _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
 _forecast_days = 5  # numbers of days in the future to train on
-_forecast_buy_threshold = 2.8  # train for positive results above this percent return
-_forecast_sell_threshold = -2.8  # train for positive results below this percent return
+_forecast_buy_threshold = 1.1  # train for positive results above this percent return
+_forecast_sell_threshold = -1.1  # train for positive results below this percent return
 _forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
@@ -90,28 +90,28 @@ def _get_aggregated_data(a_path):
     if latest_file.find(_combined_filename) > -1:
         print('Reading cached file: {}'.format(_combined_filename))
         with open(a_path + _combined_filename, 'rt') as f:
-            all_data = pd.read_json(f)
+            all_data = pd.read_csv(f)
             # convert datetime column
             all_data['date'].apply(pd.to_datetime)  # TODO: THIS returns the modified column.. test the fix
             return all_data
     print('latest file found: {}'.format(latest_file))
     print('Reading raw price files...')
     for file_found in file_list:
-        if (file_found != a_path + _combined_filename) & file_found.endswith('.json'):
+        if (file_found != a_path + _combined_filename) & file_found.endswith('.csv'):
             with open(file_found, 'rt') as f:
-                current_data = pd.read_json(f)
+                current_data = pd.read_csv(f)
                 if current_data['date'].dtype == np.int64:
                     print("file: {} - type: {} ".format(file_found, current_data['date'].dtype))
                 ttl_data = pd.concat([current_data, ttl_data])
 
     # convert datetime column
-    ttl_data['date'].apply(pd.to_datetime) # TODO: THIS returns the modified column.. test the fix
+    ttl_data['date'].apply(pd.to_datetime)  # TODO: THIS returns the modified column.. test the fix
 
     # process munged data
     ttl_data.reset_index(drop=True, inplace=True)
 
     with open(a_path + _combined_filename, 'wt', encoding='utf-8') as f:
-        f.write(ttl_data.to_json())
+        f.write(ttl_data.to_csv())
     return ttl_data
 
 
@@ -166,7 +166,7 @@ def calc_label_data():
                 label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
                 new_df.loc[i] = label_row_values
             with open(_label_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
-                f.write(new_df.to_json())
+                f.write(new_df.to_csv())
 
 
 @timing
@@ -270,10 +270,10 @@ def calc_feature_data():
                 new_df[col] = np.clip(new_df[col], -1., 1.)
 
             with open(_feature_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
-                f.write(new_df.to_json())
+                f.write(new_df.to_csv())
 
 
-def _get_calc_filename(ticker, extension=".json"):
+def _get_calc_filename(ticker, extension=".csv"):
     # ticker may have odd symbols that cannot be in a filename like a forward slash
     ticker = ticker.replace('/', '+')
     return '{}{}'.format(ticker, extension)
