@@ -106,3 +106,11 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# project data
+.data/
+.logs/
+.model/
+.prediction/
+.sim/
+
