@@ -163,6 +163,12 @@ def calc_label_data():
 
                 label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
                 new_df.loc[i] = label_row_values
+
+                if i > (new_data_size - 2):
+                    print('date: {} adj close: {:4.3f} - future return: {:3.2f}'.format(
+                        curr_date, curr_close, future_return))
+                    print('   buy_label: {:1.3f} sell_label: {:1.3f} '.format(buy_label, sell_label))
+            # SAVE
             with open(_label_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
                 f.write(new_df.to_csv())
 
@@ -323,6 +329,7 @@ def calc_all():
     df = get_all_ml_data()
     print('COMBINED DATA {} rows.'.format(len(df)))
     print(df.describe())
+    print(df.tail())
 
 
 if __name__ == '__main__':
