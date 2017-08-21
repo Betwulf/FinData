@@ -12,10 +12,10 @@ _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 5  # numbers of days in the future to train on
-_forecast_buy_threshold = 1.1  # train for positive results above this percent return
-_forecast_sell_threshold = -1.1  # train for positive results below this percent return
-_forecast_slope = 0.4  # the steep climb from 0 to 1 as x approaches the threshold precentage
+_forecast_days = 15  # numbers of days in the future to train on
+_forecast_buy_threshold = 3  # train for positive results above this percent return
+_forecast_sell_threshold = -3  # train for positive results below this percent return
+_forecast_slope = 0.2  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
 # ensure paths are there...
@@ -47,9 +47,6 @@ def step(x, target_value, greater_than):
 
 
 def sigmoid(x, target_value, slope):
-    """ This function creates a 2 step smooth transition. Where x = -target_value, y = -1, then as x goes to 0
-    y is zero, and as x approaches target_value, y approaches 1.
-    Slope controls how quick the transitions are. """
     if x < -50:
         x = -50  # prevents overflow in exp.
     return 1 / (1 + np.exp((-4.0 / slope) * (x - target_value)))
@@ -133,6 +130,7 @@ def get_all_ml_data():
     df_merged = pd.merge(df_feature, df_label, how='inner', on=['date', 'ticker'])
     df_merged.sort_values('date', inplace=True)
     df_merged.reset_index(drop=True, inplace=True)
+    df_merged['date'] = pd.to_datetime(df_merged['date'])
     return df_merged
 
 
@@ -225,7 +223,10 @@ def calc_feature_data():
                 volume_high = past_volumes.max()
                 volume_low = past_volumes.min()
                 volume_percent = (curr_row['adj. volume'] - volume_low) / (volume_high - volume_low)
-                volume_deviation = np.asarray(year_df['adj. volume']).std(ddof=1) / curr_row['adj. volume']
+                volume_average = year_df['adj. volume'].values.mean()
+                volume_stddev = year_df['adj. volume'].values.std(ddof=1)
+                # want to capture up to 3 std deviations off of the average
+                volume_deviation = ((curr_row['adj. volume'] - volume_average) / volume_stddev)/3
 
                 prev_row = year_df.iloc[-16]
                 return_15_day = curr_close / prev_row['adj. close'] - 1
@@ -252,7 +253,7 @@ def calc_feature_data():
                 # print out end of series data for debugging
                 if i > (new_size-3):
                     print('date: {} adj close: {:4.3f} - year high: {:3.2f} '
-                          'macd: {:1.3f}'.format(curr_date.strftime('%x'),
+                          'macd: {:1.3f}'.format(curr_date,
                                                 curr_close, curr_year_high_pct, macd))
                     print('   volume %: {:1.3f} volume stddev: {:1.3f} '.format(volume_percent, volume_deviation))
                     print('   9 day rtn: {:1.3f} stddev 60: {:1.3f} '
@@ -265,7 +266,7 @@ def calc_feature_data():
 
                 new_df.loc[i] = new_values
 
-            # Now normalize the data
+            # Now normalize-ish the data by clipping it to acceptable ranges for ML
             for col in get_feature_columns():
                 new_df[col] = np.clip(new_df[col], -1., 1.)
 

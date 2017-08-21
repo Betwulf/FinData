@@ -139,7 +139,7 @@ def get_all_prices():
                 ttl_data = pd.concat([current_data, ttl_data])
 
     # process munged data
-    ttl_data['date'] = [index_date.strftime('%Y-%m-%d') for index_date in ttl_data.index]
+    # ttl_data['date'] = [index_date.strftime('%Y-%m-%d') for index_date in ttl_data.index]
     ttl_data.sort_values('date', inplace=True)
     ttl_data.reset_index(drop=True, inplace=True)
 
