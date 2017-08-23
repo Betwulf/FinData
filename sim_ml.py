@@ -55,7 +55,7 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
     with open(prediction_file, 'rt', encoding='utf-8') as f:
         predictions_df = pd.read_csv(f)
 
-    model_file_list = {predictions_df['model_file'].values}
+    model_file_list = set(predictions_df['model_file'].values)
 
     for model_file in model_file_list:
         model_predictions_df = predictions_df[predictions_df.model_file == model_file].copy()
@@ -72,12 +72,12 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
         prediction_price_df.sort_values('date', inplace=True)
         prediction_price_df.reset_index(drop=True, inplace=True)
 
-        simulate(start_cash, buy_threshold, sell_threshold, difference_threshold,
+        simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold,
                  max_position_percent, trx_cost, prediction_price_df)
 
 
 @timing
-def simulate(start_cash, buy_threshold, sell_threshold, difference_threshold,
+def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold,
              max_position_percent, trx_cost, prediction_price_df):
 
     transactions_df = pd.DataFrame(columns=_get_transaction_columns())
@@ -109,28 +109,28 @@ def simulate(start_cash, buy_threshold, sell_threshold, difference_threshold,
             # rebal tickers that are staying
             for a_ticker, a_price, a_buy_bool in curr_rebalances:
                 a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
-                old_quantity = a_row_df['quantity'][0]
-                old_age = a_row_df['age'][0]
+                old_quantity = a_row_df['quantity'].iloc[0]
+                old_age = a_row_df['age'].iloc[0]
                 rebal_quantity = (target_position_value - old_quantity * a_price) / a_price
                 ttl_trx_cost = rebal_quantity*a_price - trx_cost
-                new_transaction = [a_ticker, curr_date, a_price, rebal_quantity,
+                new_transaction = [model_file, a_ticker, curr_date, a_price, rebal_quantity,
                                    trx_cost, ttl_trx_cost, False, False, True]
                 transactions_df.loc[transactions_df.shape[0]] = new_transaction
                 curr_cash += -rebal_quantity*a_price - trx_cost
                 new_quantity = old_quantity + rebal_quantity
                 new_age = 0 if a_buy_bool else old_age + 1
-                new_position = [a_ticker, curr_date, a_price, new_quantity, a_price*new_quantity, new_age]
+                new_position = [model_file, a_ticker, curr_date, a_price, new_quantity, a_price*new_quantity, new_age]
                 new_positions_df.loc[new_positions_df.shape[0]] = new_position
 
             # buy new tickers
             for a_ticker, a_price in curr_buys:
                 buy_quantity = target_position_value/a_price
                 ttl_trx_cost = target_position_value - trx_cost
-                new_transaction = [a_ticker, curr_date, a_price, buy_quantity,
+                new_transaction = [model_file, a_ticker, curr_date, a_price, buy_quantity,
                                    trx_cost, ttl_trx_cost, True, False, False]
                 transactions_df.loc[transactions_df.shape[0]] = new_transaction
                 curr_cash -= target_position_value + trx_cost
-                new_position = [a_ticker, curr_date, a_price, buy_quantity, a_price * buy_quantity, 0]
+                new_position = [model_file, a_ticker, curr_date, a_price, buy_quantity, a_price * buy_quantity, 0]
                 new_positions_df.loc[new_positions_df.shape[0]] = new_position
 
             # sell dying tickers
@@ -140,13 +140,13 @@ def simulate(start_cash, buy_threshold, sell_threshold, difference_threshold,
                     print("what?")
                 old_quantity = a_row_df['quantity'][0]
                 ttl_trx_cost = - a_price*old_quantity - trx_cost
-                new_transaction = [a_ticker, curr_date, a_price, old_quantity,
+                new_transaction = [model_file, a_ticker, curr_date, a_price, old_quantity,
                                    trx_cost, ttl_trx_cost, False, True, False]
                 transactions_df.loc[transactions_df.shape[0]] = new_transaction
                 curr_cash += a_price*old_quantity - trx_cost
 
             # Add cash as a position
-            new_position = ['$', curr_date, curr_cash, 1, curr_cash, 0]
+            new_position = [model_file, '$', curr_date, curr_cash, 1, curr_cash, 0]
             new_positions_df.loc[new_positions_df.shape[0]] = new_position
 
             # clean up
