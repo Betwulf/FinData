@@ -128,6 +128,8 @@ def get_all_ml_data():
     df_feature = get_all_feature_data()
     df_label = get_all_label_data()
     df_merged = pd.merge(df_feature, df_label, how='inner', on=['date', 'ticker'])
+    if df_merged.empty:
+        print('merge created empty dataframe.')
     df_merged.sort_values('date', inplace=True)
     df_merged.reset_index(drop=True, inplace=True)
     df_merged['date'] = pd.to_datetime(df_merged['date'])

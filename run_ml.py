@@ -19,12 +19,12 @@ label_count = len(dml.get_label_columns())
 learning_rate = 0.001
 epochs = 1000000  # 1600000
 display_step = 100000  # 10000
-save_step = 1000000  # 100000
+save_step = 100000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
-feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN
-hidden_neurons = 256
+feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length
+hidden_neurons = 128
 last_hidden_neurons = 32
 
 # File parameters
@@ -52,6 +52,18 @@ def get_prediction_filename(a_model_file):
     return '{}{}'.format(a_model_file, '.csv')
 
 
+def get_state_variables(batch_size, cell):
+    # For each layer, get the initial state and make a variable out of it
+    # to enable updating its value.
+    state_variables = []
+    for state_c, state_h in cell.zero_state(batch_size, tf.float32):
+        state_variables.append(rnn.LSTMStateTuple(
+            tf.Variable(state_c, trainable=True),
+            tf.Variable(state_h, trainable=True)))
+    # Return as a tuple, so that it can be fed to dynamic_rnn as an initial state
+    return tuple(state_variables)
+
+
 @timing
 def build_rnn():
     g = tf.Graph()
@@ -68,7 +80,7 @@ def build_rnn():
             'out': tf.Variable(tf.random_normal([last_hidden_neurons, label_count]), name="out_weights")
         }
         biases = {
-            'out': tf.Variable(tf.random_normal([1]), name="out_bias")
+            'out': tf.Variable(tf.random_normal([label_count]), name="out_bias")
         }
         # reshape to [1, n_input]
         x2 = tf.reshape(x, [feature_series_count, feature_count], name="x2")
@@ -81,7 +93,11 @@ def build_rnn():
                                      rnn.BasicLSTMCell(hidden_neurons),
                                      rnn.BasicLSTMCell(last_hidden_neurons)])
 
+        # trying to save state or rnn, this should work
+        # states = get_state_variables(feature_count, rnn_cell)
+
         # generate prediction
+        # outputs, states = tf.nn.dynamic_rnn(rnn_cell, x3, sequence_length=[feature_series_count], dtype=tf.float32)
         outputs, states = rnn.static_rnn(rnn_cell, x3, dtype=tf.float32)
 
         # there are feature_series_count outputs but
@@ -92,7 +108,8 @@ def build_rnn():
         # Loss and optimizer
         # cost = tf.nn.softmax_cross_entropy_with_logits(logits=prediction[0], labels=y)
         cost = tf.reduce_mean(tf.square(y - prediction[0]), name="cost")
-        optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate, name="rms_optimizer").minimize(cost)
+        # optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate, name="rms_optimizer").minimize(cost)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.0001, name="adam_optimizer").minimize(cost)
 
         # Initializing the variables
         init = tf.global_variables_initializer()
@@ -173,6 +190,9 @@ def train_rnn(training_data_cls):
 
                 # Save the variables to disk.
                 if (step + 1) % save_step == 0:
+                    save_path = saver.save(session, _model_file, global_step=step+1)
+                    print("Model saved in file: %s" % save_path)
+                if step == 99 or step == 199 or step == 299 or step == 399:
                     save_path = saver.save(session, _model_file, global_step=step+1)
                     print("Model saved in file: %s" % save_path)
 
@@ -307,9 +327,9 @@ def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_th
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:
-        get_data_and_test_rnn(2000, 2000, 0.9, 0.8, sys.argv[2])
+        get_data_and_test_rnn(4000, 4000, 0.8, 0.7, sys.argv[2])
     elif len(sys.argv) > 1:
         if sys.argv[1] == "test":
-            get_data_and_test_rnn(2000, 2000, 0.9, 0.8)
+            get_data_and_test_rnn(4000, 4000, 0.8, 0.7)
     else:
-        get_data_train_and_test_rnn(2000, 2000, 0.9, 0.8)
+        get_data_train_and_test_rnn(4000, 4000, 0.8, 0.7)
