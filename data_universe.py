@@ -84,7 +84,7 @@ def update_price_cache(ticker):
         unique_months = {(x.year, x.month) for x in fin_data.index}
         print(fin_data.head())
         print("got {} months worth of data.".format(len(unique_months)))
-        # Add ticker to the dataframe
+        # Add ticker to the data frame
         fin_data['ticker'] = [ticker for _ in range(len(fin_data[fin_data.columns[0]]))]
         for (year, month) in unique_months:
             month_first, month_last = _get_day_range_for_month(year, month)
@@ -124,7 +124,7 @@ def get_all_prices():
     if latest_file.find(_combined_price_filename) > -1:
         print('Reading cached file: {}'.format(_combined_price_filename))
         with open(_price_path + _combined_price_filename, 'rt') as f:
-            all_data = pd.read_csv(f)
+            all_data = pd.read_csv(f, index_col=0)
             return all_data
     print('Reading raw price files...')
     counter = 0

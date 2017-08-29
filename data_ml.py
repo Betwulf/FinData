@@ -88,7 +88,7 @@ def _get_aggregated_data(a_path, a_filename):
     if latest_file.find(a_filename) > -1:
         print('Reading cached file: {}'.format(a_filename))
         with open(a_path + a_filename, 'rt') as f:
-            all_data = pd.read_csv(f)
+            all_data = pd.read_csv(f, index_col=0)
             # convert datetime column
             all_data['date'].apply(pd.to_datetime)  # TODO: THIS returns the modified column.. test the fix
             return all_data
@@ -97,7 +97,7 @@ def _get_aggregated_data(a_path, a_filename):
     for file_found in file_list:
         if (file_found != a_path + a_filename) & file_found.endswith('.csv'):
             with open(file_found, 'rt') as f:
-                current_data = pd.read_csv(f)
+                current_data = pd.read_csv(f, index_col=0)
                 if current_data['date'].dtype == np.int64:
                     print("file: {} - type: {} ".format(file_found, current_data['date'].dtype))
                 ttl_data = pd.concat([current_data, ttl_data])
