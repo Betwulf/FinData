@@ -5,9 +5,10 @@ import data_universe as du
 from utils import timing
 
 
-_label_dir = "\\data\\labels\\"
-_feature_dir = "\\data\\features\\"
-_combined_filename = "special.csv"
+_label_dir = "/data/labels/"
+_feature_dir = "/data/features/"
+_combined_features_filename = "features.csv"
+_combined_labels_filename = "labels.csv"
 _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
@@ -78,15 +79,15 @@ def ticker_data():
         yield ticker, sub_df, percent_done
 
 
-def _get_aggregated_data(a_path):
+def _get_aggregated_data(a_path, a_filename):
     ttl_data = pd.DataFrame()
     file_list = [a_path + a_file for a_file in os.listdir(a_path)]
     latest_file = ""
     if len(file_list) > 0:
         latest_file = max(file_list, key=os.path.getmtime)
-    if latest_file.find(_combined_filename) > -1:
-        print('Reading cached file: {}'.format(_combined_filename))
-        with open(a_path + _combined_filename, 'rt') as f:
+    if latest_file.find(a_filename) > -1:
+        print('Reading cached file: {}'.format(a_filename))
+        with open(a_path + a_filename, 'rt') as f:
             all_data = pd.read_csv(f)
             # convert datetime column
             all_data['date'].apply(pd.to_datetime)  # TODO: THIS returns the modified column.. test the fix
@@ -94,7 +95,7 @@ def _get_aggregated_data(a_path):
     print('latest file found: {}'.format(latest_file))
     print('Reading raw price files...')
     for file_found in file_list:
-        if (file_found != a_path + _combined_filename) & file_found.endswith('.csv'):
+        if (file_found != a_path + a_filename) & file_found.endswith('.csv'):
             with open(file_found, 'rt') as f:
                 current_data = pd.read_csv(f)
                 if current_data['date'].dtype == np.int64:
@@ -107,7 +108,7 @@ def _get_aggregated_data(a_path):
     # process munged data
     ttl_data.reset_index(drop=True, inplace=True)
 
-    with open(a_path + _combined_filename, 'wt', encoding='utf-8') as f:
+    with open(a_path + a_filename, 'wt', encoding='utf-8') as f:
         f.write(ttl_data.to_csv())
     return ttl_data
 
@@ -115,13 +116,13 @@ def _get_aggregated_data(a_path):
 @timing
 def get_all_feature_data():
     """ Returns a dataframe with all calculated data for ml to consume """
-    return _get_aggregated_data(_feature_path)
+    return _get_aggregated_data(_feature_path, _combined_features_filename)
 
 
 @timing
 def get_all_label_data():
     """ Returns a dataframe with all label data for ml to consume """
-    return _get_aggregated_data(_label_path)
+    return _get_aggregated_data(_label_path, _combined_labels_filename)
 
 
 def get_all_ml_data():

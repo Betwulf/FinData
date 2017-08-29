@@ -6,8 +6,8 @@ import pandas as pd
 import quandl
 from utils import timing
 
-_data_dir = "\\data\\"
-_price_dir = "\\data\\prices\\"
+_data_dir = "/data/"
+_price_dir = "/data/prices/"
 _combined_price_filename = "__all.csv"
 
 _cwd = os.getcwd()

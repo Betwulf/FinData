@@ -49,6 +49,19 @@ class TrainingData:
         descriptive_df = train_df.drop(dml.get_feature_columns(), axis=1)
         return feature_shaped, label_array, descriptive_df
 
+    def get_batch(self, batch_size, until_exhausted=False):
+        batch_feature_shaped = np.ndarray((batch_size, self.feature_series_count, self.feature_count))
+        batch_label_array = np.ndarray((batch_size, 1, self.label_count))
+        batch_descriptive = []
+
+        for i in range(batch_size):
+            feature_data, label_data, descriptive_df = self.get_next_training_data(until_exhausted)
+            batch_feature_shaped[i] = feature_data
+            batch_label_array[i] = label_data
+            batch_descriptive.append(descriptive_df)
+
+        return batch_feature_shaped, batch_label_array, batch_descriptive
+
     def get_next_training_data(self, until_exhausted=False):
         # if we have used up all data possible, then reset and reuse training data
         if self.ticker_df_curr_row.sum() == -self.ticker_count:

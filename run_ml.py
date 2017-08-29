@@ -28,8 +28,8 @@ hidden_neurons = 128
 last_hidden_neurons = 32
 
 # File parameters
-_prediction_dir = "\\prediction\\"
-_model_dir = "\\model\\"
+_prediction_dir = "/prediction/"
+_model_dir = "/model/"
 _prediction_filename = "predictions.csv"
 _cwd = os.getcwd()
 _model_path = _cwd + _model_dir
@@ -307,6 +307,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
 
     # TRAIN
     training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    fff, lll, ddd = training_data_class.get_batch(3)
     train_rnn(training_data_class)
 
     # TEST
