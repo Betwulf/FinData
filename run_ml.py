@@ -307,6 +307,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
 
     # TRAIN
     training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    # TODO: switch rnn to use batch data, testing below
     fff, lll, ddd = training_data_class.get_batch(3)
     train_rnn(training_data_class)
 
