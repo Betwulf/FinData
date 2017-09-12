@@ -61,7 +61,7 @@ def _get_tickerlist(remove_wiki=False, num_tickers=510):
         snp_list = [x.strip('\n') for x in f]
     print("Got tickers... Top {}: ".format(num_tickers))
     if remove_wiki:
-        snp_list = snp_list[len(_wiki_prefix):]
+        snp_list = [x[len(_wiki_prefix):] for x in snp_list]
     print(snp_list[:num_tickers])
     return snp_list[:num_tickers]
 
@@ -213,15 +213,17 @@ def update_fundamental_data(ticker, fundamental_file_list):
             print("Found {}".format(ticker_filename))
         else:
             print("Getting fundamental data for {}".format(ticker))
-            url = "http://www.stockpup.com/data/" + ticker + "A_quarterly_financial_data.csv"
+            url = "http://www.stockpup.com/data/" + ticker + "_quarterly_financial_data.csv"
             s = requests.get(url).content
-            csv_df = pd.read_csv(io.StringIO(s.decode('utf-8')))
+            csv_df = pd.read_csv(io.StringIO(s.decode('utf-8')), error_bad_lines=False)
+            if (len(csv_df.columns)) == 1:
+                print("Got HTML :( ")
             csv_df['ticker'] = pd.Series(_wiki_prefix + ticker, index=csv_df.index)
             csv_df.columns = [x.lower() for x in csv_df.columns]
             with open(_fundamental_path + ticker_filename, 'wt') as f:
                 f.write(csv_df.to_csv())
-    except:
-        print("failed getting fundamental for {}".format(ticker))
+    except (ValueError, RuntimeError, NameError, TypeError) as err:
+        print("failed getting fundamental for {} - {}".format(ticker, err))
         pass
 
 
