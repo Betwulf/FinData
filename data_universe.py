@@ -3,22 +3,29 @@ import os
 import datetime
 import calendar
 import pandas as pd
+import io
+import requests
 import quandl
 from utils import timing
 
 _data_dir = "/data/"
 _price_dir = "/data/prices/"
+_fundamental_dir = "/data/fundamental/"
 _combined_price_filename = "__all.csv"
+_wiki_prefix = 'WIKI/'
 
 _cwd = os.getcwd()
 _data_path = _cwd + _data_dir
 _price_path = _cwd + _price_dir
+_fundamental_path = _cwd + _fundamental_dir
 
 # ensure paths are there...
 if not os.path.exists(_data_path):
     os.makedirs(_data_path)
 if not os.path.exists(_price_path):
     os.makedirs(_price_path)
+if not os.path.exists(_fundamental_path):
+    os.makedirs(_fundamental_path)
 
 # Generate a list of all current price files...
 file_list = []
@@ -32,7 +39,7 @@ def create_universe_from_json():
 
     with open('S&P500.json', 'rb') as f:
         json = pd.read_json(f)
-        snp_list = ['WIKI/' + x['ticker'] for x in json['constituents']]
+        snp_list = [_wiki_prefix + x['ticker'] for x in json['constituents']]
 
     snp_list.sort()
     with open(_data_path + 'universe.txt', 'wt', encoding='utf-8') as f:
@@ -43,18 +50,18 @@ def create_universe_from_json():
 def update_all_price_caches():
     """ Go through each ticker in the universe and either get beginning data or update latest data """
 
-    # TODO: only working with the first 3 tickers while debugging
     snp_list = _get_tickerlist()
     for ticker in snp_list:
         update_price_cache(ticker)
 
 
-def _get_tickerlist():
-    num_tickers = 510
+def _get_tickerlist(remove_wiki=False, num_tickers=510):
     # snp_list = []
     with open(_data_path + 'universe.txt', 'rt', encoding='utf-8') as f:
         snp_list = [x.strip('\n') for x in f]
     print("Got tickers... Top {}: ".format(num_tickers))
+    if remove_wiki:
+        snp_list = snp_list[len(_wiki_prefix):]
     print(snp_list[:num_tickers])
     return snp_list[:num_tickers]
 
@@ -186,6 +193,34 @@ def _any_ticker_files(ticker):
     if old_date == last_date:
         return False, last_date, file_timestamp
     return True, last_date, file_timestamp
+
+
+def update_all_fundamental_data():
+    snp_list = _get_tickerlist(remove_wiki=True)
+    fundamental_file_list = []
+    for fundamental_file_found in os.listdir(_fundamental_path):
+        fundamental_file_list.append(fundamental_file_found)
+    for ticker in snp_list:
+        update_fundamental_data(ticker, fundamental_file_list)
+
+
+def update_fundamental_data(ticker, fundamental_file_list):
+    try:
+        ticker_filename = ticker + '.csv'
+        ticker_exists = len([c for c in fundamental_file_list if c == ticker_filename])
+        if ticker_exists == 1:
+            print("Found {}".format(ticker_filename))
+        else:
+            url = "http://www.stockpup.com/data/" + ticker + "A_quarterly_financial_data.csv"
+            s = requests.get(url).content
+            csv_df = pd.read_csv(io.StringIO(s.decode('utf-8')))
+            csv_df['ticker'] = pd.Series(_wiki_prefix + ticker, index=csv_df.index)
+            csv_df.columns = [x.lower() for x in csv_df.columns]
+            with open(_fundamental_path + ticker_filename, 'wt') as f:
+                f.write(csv_df.to_csv())
+    except:
+        print("failed getting fundamental for {}".format(ticker))
+        pass
 
 
 if __name__ == '__main__':
