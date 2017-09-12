@@ -196,6 +196,7 @@ def _any_ticker_files(ticker):
 
 
 def update_all_fundamental_data():
+    print("Updating Fundamental Data...")
     snp_list = _get_tickerlist(remove_wiki=True)
     fundamental_file_list = []
     for fundamental_file_found in os.listdir(_fundamental_path):
@@ -211,6 +212,7 @@ def update_fundamental_data(ticker, fundamental_file_list):
         if ticker_exists == 1:
             print("Found {}".format(ticker_filename))
         else:
+            print("Getting fundamental data for {}".format(ticker))
             url = "http://www.stockpup.com/data/" + ticker + "A_quarterly_financial_data.csv"
             s = requests.get(url).content
             csv_df = pd.read_csv(io.StringIO(s.decode('utf-8')))
@@ -224,6 +226,7 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
+    update_all_fundamental_data()
     # create_universe_from_json()
     api_key = ""
     if len(sys.argv) > 1:
