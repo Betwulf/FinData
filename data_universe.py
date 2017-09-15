@@ -217,9 +217,20 @@ def update_fundamental_data(ticker, fundamental_file_list):
             s = requests.get(url).content
             csv_df = pd.read_csv(io.StringIO(s.decode('utf-8')), error_bad_lines=False)
             if (len(csv_df.columns)) == 1:
-                print("Got HTML :( ")
+                raise TypeError("got HTML instead of CSV")
             csv_df['ticker'] = pd.Series(_wiki_prefix + ticker, index=csv_df.index)
             csv_df.columns = [x.lower() for x in csv_df.columns]
+            csv_df = csv_df.query('roe.notnull()')
+            csv_df.drop(['shares', 'split factor', 'assets', 'current assets', 'liabilities', 'current liabilities',
+                         'shareholders equity', 'non-controlling interest', 'preferred equity',
+                         'goodwill & intangibles', 'long-term debt', 'earnings available for common stockholders',
+                         'eps diluted', 'dividend per share', 'cash from operating activities',
+                         'cash from investing activities', 'cash from financing activities',
+                         'cash change during period', 'capital expenditures', 'price', 'price high', 'price low',
+                         'roa', 'p/b ratio', 'p/e ratio', 'cumulative dividends per share', 'dividend payout ratio',
+                         'long-term debt to equity ratio', 'equity to assets ratio', 'asset turnover',
+                         'free cash flow per share', 'current ratio'], axis=1, inplace=True)
+
             with open(_fundamental_path + ticker_filename, 'wt') as f:
                 f.write(csv_df.to_csv())
     except (ValueError, RuntimeError, NameError, TypeError) as err:
