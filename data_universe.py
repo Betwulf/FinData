@@ -2,6 +2,7 @@ import sys
 import os
 import datetime
 import calendar
+import numpy as np
 import pandas as pd
 import io
 import requests
@@ -220,7 +221,11 @@ def update_fundamental_data(ticker, fundamental_file_list):
                 raise TypeError("got HTML instead of CSV")
             csv_df['ticker'] = pd.Series(_wiki_prefix + ticker, index=csv_df.index)
             csv_df.columns = [x.lower() for x in csv_df.columns]
-            csv_df = csv_df.query('roe.notnull()')
+            # Clean the crappy data - where there are 'None' Strings, try to stale data
+            csv_df = csv_df.replace('None', np.nan)
+            csv_df = csv_df.fillna(method='backfill')
+            csv_df = csv_df.dropna(axis=0)
+            # remove unnecessary data
             csv_df.drop(['shares', 'split factor', 'assets', 'current assets', 'liabilities', 'current liabilities',
                          'shareholders equity', 'non-controlling interest', 'preferred equity',
                          'goodwill & intangibles', 'long-term debt', 'earnings available for common stockholders',
