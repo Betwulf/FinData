@@ -12,7 +12,7 @@ from utils import timing
 _data_dir = "/data/"
 _price_dir = "/data/prices/"
 _fundamental_dir = "/data/fundamental/"
-_combined_price_filename = "__all.csv"
+_combined_filename = "__all.csv"
 _wiki_prefix = 'WIKI/'
 
 _cwd = os.getcwd()
@@ -27,11 +27,6 @@ if not os.path.exists(_price_path):
     os.makedirs(_price_path)
 if not os.path.exists(_fundamental_path):
     os.makedirs(_fundamental_path)
-
-# Generate a list of all current price files...
-file_list = []
-for file_found in os.listdir(_price_path):
-    file_list.append(file_found)
 
 
 def create_universe_from_json():
@@ -113,7 +108,7 @@ def get_ticker_prices():
     snp_list = _get_tickerlist()
     df_dict = {t: pd.DataFrame() for t in snp_list}
     for file_found in os.listdir(_price_path):
-        if file_found.find(_combined_price_filename) == -1:
+        if file_found.find(_combined_filename) == -1:
             file_ticker, file_year, file_month = _parse_filename(file_found)
             with open(_price_path + file_found, 'rt') as f:
                 current_data = pd.read_csv(f)
@@ -129,16 +124,16 @@ def get_all_prices():
     file_list = [_price_path + a_file for a_file in os.listdir(_price_path)]
     latest_file = max(file_list, key=os.path.getmtime)
     print('latest file found: {}'.format(latest_file))
-    if latest_file.find(_combined_price_filename) > -1:
-        print('Reading cached file: {}'.format(_combined_price_filename))
-        with open(_price_path + _combined_price_filename, 'rt') as f:
+    if latest_file.find(_combined_filename) > -1:
+        print('Reading cached file: {}'.format(_combined_filename))
+        with open(_price_path + _combined_filename, 'rt') as f:
             all_data = pd.read_csv(f, index_col=0)
             return all_data
     print('Reading raw price files...')
     counter = 0
     total_count = len(file_list)
     for file_found in file_list:
-        if (file_found != _price_path + _combined_price_filename) & file_found.endswith('.csv'):
+        if (file_found != _price_path + _combined_filename) & file_found.endswith('.csv'):
             if counter % int(total_count/20) == 0:
                 print("   {0:.0f}% done...".format((counter/total_count)*100))
             counter += 1
@@ -152,7 +147,7 @@ def get_all_prices():
     ttl_data.reset_index(drop=True, inplace=True)
 
     # Save the file...
-    with open(_price_path + _combined_price_filename, 'wt') as f:
+    with open(_price_path + _combined_filename, 'wt') as f:
         f.write(ttl_data.to_csv())
     return ttl_data
 
@@ -180,13 +175,18 @@ def _get_day_range_for_month(year, month):
 def _any_ticker_files(ticker):
     """ Check to see if there are any ticker files already saved to disk.
     This saves us from having to go to the source and reload data. """
+    # Generate a list of all current price files...
+    file_list = []
+    for file_found in os.listdir(_price_path):
+        file_list.append(file_found)
+
     last_date = datetime.date(1900, 1, 1)
     old_date = last_date
     file_timestamp = datetime.datetime(1900, 1, 1)
     for file_found in file_list:
         file_timestamp = max(file_timestamp,
                              datetime.datetime.fromtimestamp(os.path.getmtime(_price_path + file_found)))
-        if (file_found.find(_combined_price_filename) == -1) & file_found.endswith('.csv'):
+        if (file_found.find(_combined_filename) == -1) & file_found.endswith('.csv'):
             file_ticker, file_year, file_month = _parse_filename(file_found)
             if file_ticker == ticker:
                 file_date = datetime.date(file_year, file_month, 1)
@@ -194,6 +194,41 @@ def _any_ticker_files(ticker):
     if old_date == last_date:
         return False, last_date, file_timestamp
     return True, last_date, file_timestamp
+
+
+def get_all_fundamental_data():
+    """ This gets every single price for all securities in the universe - warning this could take some time... """
+    ttl_data = pd.DataFrame()
+    fundamental_file_list = [_fundamental_path + a_file for a_file in os.listdir(_fundamental_path)]
+    latest_file = max(fundamental_file_list, key=os.path.getmtime)
+    print('latest file found: {}'.format(latest_file))
+    if latest_file.find(_combined_filename) > -1:
+        print('Reading cached file: {}'.format(_combined_filename))
+        with open(_fundamental_path + _combined_filename, 'rt') as f:
+            all_data = pd.read_csv(f, index_col=0)
+            return all_data
+    print('Reading raw fundamental files...')
+    counter = 0
+    total_count = len(fundamental_file_list)
+    for file_found in fundamental_file_list:
+        if (file_found != _fundamental_path + _combined_filename) & file_found.endswith('.csv'):
+            if counter % int(total_count / 10) == 0:
+                print("   {0:.0f}% done...".format((counter / total_count) * 100))
+            counter += 1
+            with open(file_found, 'rt') as f:
+                current_data = pd.read_csv(f, index_col=0)
+                ttl_data = pd.concat([current_data, ttl_data])
+
+    # process munged data
+    # ttl_data['date'] = [index_date.strftime('%Y-%m-%d') for index_date in ttl_data.index]
+    ttl_data = ttl_data.rename(columns={'quarter end': 'date'})
+    ttl_data.sort_values('date', inplace=True)
+    ttl_data.reset_index(drop=True, inplace=True)
+
+    # Save the file...
+    with open(_fundamental_path + _combined_filename, 'wt') as f:
+        f.write(ttl_data.to_csv())
+    return ttl_data
 
 
 def update_all_fundamental_data():
@@ -225,6 +260,8 @@ def update_fundamental_data(ticker, fundamental_file_list):
             csv_df = csv_df.replace('None', np.nan)
             csv_df = csv_df.fillna(method='backfill')
             csv_df = csv_df.dropna(axis=0)
+            if csv_df.shape[0] < 2:
+                raise ValueError("Not enough data in CSV to use.")
             # remove unnecessary data
             csv_df.drop(['shares', 'split factor', 'assets', 'current assets', 'liabilities', 'current liabilities',
                          'shareholders equity', 'non-controlling interest', 'preferred equity',
@@ -244,7 +281,8 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
-    update_all_fundamental_data()
+    # update_all_fundamental_data()
+    get_all_fundamental_data()
     # create_universe_from_json()
     api_key = ""
     if len(sys.argv) > 1:
