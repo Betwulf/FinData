@@ -56,27 +56,42 @@ def sigmoid(x, target_value, slope):
 def ticker_data():
     """ Iterator to get the next ticker and its corresponding data_frame of prices """
 
-    main_df = du.get_all_prices()
+    prices_df = du.get_all_prices()
+    fundamental_df = du.get_all_fundamental_data()
 
-    ticker_set = {t for t in main_df['ticker']}
+    ticker_set = {t for t in prices_df['ticker']}
+    fundamental_ticker_set = {t for t in fundamental_df['ticker']}
+    ticker_set = [val for val in fundamental_ticker_set if val in ticker_set]
     ticker_count = len(ticker_set)
     tickers = iter(ticker_set)
     counter = 0
 
     # for each ticker, sort and process calculated data for ml
-    while True:
+    sub_df = None
+    while sub_df is None:
         counter += 1
         ticker = next(tickers)
         if ticker is None:
             break
-        sub_df = main_df[main_df.ticker == ticker]
+        sub_df = prices_df[prices_df.ticker == ticker]
+        sub_df = pd.merge(sub_df, fundamental_df, how='left', on=['date', 'ticker'])
         sub_df = sub_df.sort_values(by='date')
-        print('ticker: {} - rows: {}'.format(ticker, len(sub_df)))
-        start_date = sub_df.head(1)['date'].iloc[0]
-        end_date = sub_df.tail(1)['date'].iloc[0]
-        print('   date_range: {} - {}'.format(start_date, end_date))
-        percent_done = counter / ticker_count
-        yield ticker, sub_df, percent_done
+        sub_df = sub_df.fillna(method='pad')
+        sub_df = sub_df[np.isfinite(sub_df['roe'])]
+        if len(sub_df) < 2:
+            sub_df = None
+            print("--- CANNOT merge data for ticker {}".format(ticker))
+        else:
+            with open('c:/Temp/temp.' + _get_calc_filename(ticker) + '.csv', 'wt', encoding='utf-8') as f:
+                f.write(sub_df.to_csv())
+
+            print('ticker: {} - rows: {}'.format(ticker, len(sub_df)))
+            start_date = sub_df.head(1)['date'].iloc[0]
+            end_date = sub_df.tail(1)['date'].iloc[0]
+            print('   date_range: {} - {}'.format(start_date, end_date))
+            percent_done = counter / ticker_count
+            yield ticker, sub_df, percent_done
+            sub_df = None
 
 
 def _get_aggregated_data(a_path, a_filename):
@@ -215,6 +230,17 @@ def calc_feature_data():
                 curr_date = curr_row['date']
                 curr_close = curr_row['adj. close']
 
+                # Fundamental Measures here - remember to unitize
+                roe = curr_row['roe']
+                eps = curr_row['eps basic']
+                net_margin = curr_row['net margin']
+                # for PE Ratio i really should be using the total of the past 4 quarters earnings, but can't get that
+                # reliably, as some rows may have been deleted due to missing data
+                pe_ratio = (curr_close / (float(curr_row['earnings']) / float(curr_row['shares']))) / 150.0
+                # for  PB ratio, the value can get really big, like over 30, so divide by 20 to capture val
+                pb_ratio = (curr_close / curr_row['book value']) / 20.0
+                rpsop = (curr_row['revenue'] / curr_row['shares']) / curr_close
+
                 curr_return = curr_close / prev_row['adj. close'] - 1
                 year_return = curr_close / year_df.iloc[0]['adj. close'] - 1
                 curr_return_open = curr_close / curr_row['adj. open'] - 1
@@ -271,7 +297,8 @@ def calc_feature_data():
 
                 new_values = [ticker, curr_date, curr_return, year_return, volume_percent, volume_deviation,
                               return_60_day, ma_30_day, ma_60_day, macd,
-                              curr_year_high_pct, stddev_30, stddev_60, stddev_year]
+                              curr_year_high_pct, stddev_30, stddev_60, stddev_year,
+                              roe, rpsop, pb_ratio, pe_ratio, eps, net_margin]
 
                 new_df.loc[i] = new_values
 
@@ -306,7 +333,8 @@ def get_label_columns():
 def get_feature_columns():
     return ['curr_return', 'year_return', 'volume_percent', 'volume_deviation',
             'return_60_day', 'ma_30_day', 'ma_60_day', 'macd',
-            'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year']
+            'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year',
+            'roe', 'rpsop', 'pbratio', 'peratio', 'eps', 'net_margin']
 
 
 def _get_feature_dataframe_columns():
@@ -324,13 +352,20 @@ def calc_all():
     calc_feature_data()
     calc_label_data()
     df = get_all_feature_data()
+    print('--------------------------------------------')
     print('FEATURE DATA {} rows.'.format(len(df)))
+    print('--------------------------------------------')
     print(df.describe())
+    print(df.tail())
     df = get_all_label_data()
+    print('--------------------------------------------')
     print('LABEL DATA {} rows.'.format(len(df)))
+    print('--------------------------------------------')
     print(df.describe())
     df = get_all_ml_data()
+    print('--------------------------------------------')
     print('COMBINED DATA {} rows.'.format(len(df)))
+    print('--------------------------------------------')
     print(df.describe())
     print(df.tail())
 

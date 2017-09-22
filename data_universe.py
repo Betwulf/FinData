@@ -196,6 +196,7 @@ def _any_ticker_files(ticker):
     return True, last_date, file_timestamp
 
 
+@timing
 def get_all_fundamental_data():
     """ This gets every single price for all securities in the universe - warning this could take some time... """
     ttl_data = pd.DataFrame()
@@ -220,10 +221,14 @@ def get_all_fundamental_data():
                 ttl_data = pd.concat([current_data, ttl_data])
 
     # process munged data
-    # ttl_data['date'] = [index_date.strftime('%Y-%m-%d') for index_date in ttl_data.index]
     ttl_data = ttl_data.rename(columns={'quarter end': 'date'})
+    ttl_data = ttl_data.rename(columns={'shares split adjusted': 'shares'})
+    ttl_data = ttl_data.rename(columns={'book value of equity per share': 'book value'})
+
     ttl_data.sort_values('date', inplace=True)
     ttl_data.reset_index(drop=True, inplace=True)
+    print("Fundamental Data .....")
+    ttl_data.describe()
 
     # Save the file...
     with open(_fundamental_path + _combined_filename, 'wt') as f:
