@@ -105,7 +105,7 @@ def _get_aggregated_data(a_path, a_filename):
             all_data['date'].apply(pd.to_datetime)  # TODO: THIS returns the modified column.. test the fix
             return all_data
     print('latest file found: {}'.format(latest_file))
-    print('Reading raw price files...')
+    print('Reading raw files...')
     for file_found in file_list:
         if (file_found != a_path + a_filename) & file_found.endswith('.csv'):
             with open(file_found, 'rt') as f:

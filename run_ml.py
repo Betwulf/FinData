@@ -17,9 +17,9 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
-epochs = 200000  # 1600000
+epochs = 250000  # 1600000
 display_step = 10000  # 10000
-save_step = 10000  # 100000
+save_step = 50000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
@@ -33,7 +33,6 @@ _model_dir = "/model/"
 _prediction_filename = "predictions.csv"
 _cwd = os.getcwd()
 _model_path = _cwd + _model_dir
-_model_file = _model_path + 'findata'
 _prediction_path = _cwd + _prediction_dir
 prediction_file = _prediction_path + _prediction_filename
 
@@ -66,8 +65,13 @@ def get_state_variables(batch_size, cell):
 
 @timing
 def build_rnn():
+    tf.reset_default_graph()
     g = tf.Graph()
     with g.as_default():
+        # global_step - Created here, not sure if i increment, or if minimize does
+        # TODO: pass back global_step to increment? and use in saver
+        global_step = tf.Variable(0, name='global_step', trainable=False)
+
         # tf graph input
         x = tf.placeholder("float", [feature_series_count, feature_count], name="x")
         y = tf.placeholder("float", [label_count], name="y")
@@ -109,7 +113,8 @@ def build_rnn():
         # cost = tf.nn.softmax_cross_entropy_with_logits(logits=prediction[0], labels=y)
         cost = tf.reduce_mean(tf.square(y - prediction[0]), name="cost")
         # optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate, name="rms_optimizer").minimize(cost)
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.0001, name="adam_optimizer").minimize(cost)
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.0001,
+                                           name="adam_optimizer").minimize(cost, global_step=global_step)
 
         # Initializing the variables
         init = tf.global_variables_initializer()
@@ -120,15 +125,23 @@ def _get_rnn_model_files():
     return [_model_path + a_file for a_file in os.listdir(_model_path) if ".meta" in a_file]
 
 
-@timing
-def restore_rnn(model_file):
+def _name_model_file_from_path(path, steps):
+    return path + 'findata.{}'.format(steps)
 
-    print("RNN model to restore: {}".format(model_file))
+
+@timing
+def restore_rnn(meta_file):
+
+    print("RNN model to restore: {}".format(meta_file))
+    tf_data_path = meta_file[:-5]  # take off the '.meta' ending
     g = tf.Graph()
     with g.as_default():
         session = tf.Session()
-        saver = tf.train.import_meta_graph(model_file)
-        saver.restore(session, tf.train.latest_checkpoint(_model_path))
+        saver = tf.train.import_meta_graph(meta_file)
+        # latest_dataset = tf.train.latest_checkpoint(checkpoint_directory)
+        # checkpoint_state = tf.train.get_checkpoint_state(meta_file)
+        # From the checkpoint state you could get all the tf datasets in the dir, but dont need it now
+        saver.restore(session, tf_data_path)
         graph = tf.get_default_graph()
         x = graph.get_tensor_by_name("x:0")
         y = graph.get_tensor_by_name("y:0")
@@ -138,7 +151,7 @@ def restore_rnn(model_file):
 
 
 @timing
-def train_rnn(training_data_cls):
+def train_rnn(training_data_cls, train_model_path):
     the_curr_time = datetime.datetime.now().strftime('%X')
     print_string = "Time: {}".format(the_curr_time)
     print("Start training model... {}".format(print_string))
@@ -153,7 +166,7 @@ def train_rnn(training_data_cls):
             step = 0
             acc_total = 0.0
             cost_total = 0.0
-            cost_df = pd.DataFrame(columns=('iteration', 'cost'))
+            cost_df = pd.DataFrame(columns=('iteration', 'cost', 'accuracy'))
 
             writer.add_graph(session.graph)
 
@@ -176,7 +189,7 @@ def train_rnn(training_data_cls):
                     print_string += " , Average Accuracy= {:3.2f}%".format(100*acc_total/display_step)
                     print(print_string)
 
-                    cost_df.loc[cost_df.shape[0]] = [step+1, cost_total/display_step]
+                    cost_df.loc[cost_df.shape[0]] = [step+1, cost_total/display_step, 100*acc_total/display_step]
                     acc_total = 0.0
                     cost_total = 0.0
                     ticker = descriptive_df['ticker'].iloc[-1]
@@ -190,25 +203,20 @@ def train_rnn(training_data_cls):
 
                 # Save the variables to disk.
                 if (step + 1) % save_step == 0:
-                    save_path = saver.save(session, _model_file, global_step=step+1)
-                    print("Model saved in file: %s" % save_path)
-                if step == 99 or step == 199 or step == 299 or step == 399:
-                    save_path = saver.save(session, _model_file, global_step=step+1)
+                    save_path = saver.save(session, _name_model_file_from_path(train_model_path, step + 1))
                     print("Model saved in file: %s" % save_path)
 
-            print("Optimization Finished!")
-            print("Run on command line.")
-            print("\ttensorboard --logdir=%s" % logs_path)
-            print("Point your web browser to: http://localhost:6006/")
+            print("      ***** Optimization Finished! ***** ")
 
             # Save the variables to disk.
-            save_path = saver.save(session, _model_file, global_step=epochs)
-            cost_df.to_csv(_model_path + "cost.csv")
+            save_path = saver.save(session, _name_model_file_from_path(train_model_path, epochs))
+            cost_df.to_csv(train_model_path + "cost.csv")
             print("Model saved in file: %s" % save_path)
+            return save_path
 
 
 @timing
-def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file=None):
+def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, sell_threshold, specific_files=None):
     the_curr_time = datetime.datetime.now().strftime('%X')
     print_string = "Time: {}".format(the_curr_time)
     print("Start testing model...{}".format(print_string))
@@ -217,10 +225,10 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                                            'buy_prediction', 'buy_signal', 'sell_prediction', 'sell_signal'))
 
     file_list = _get_rnn_model_files()
-    if specific_file is None:
+    if specific_files is None:
         file_list = [max(file_list, key=os.path.getmtime)]
     else:
-        file_list = [specific_file]
+        file_list = specific_files
 
     for each_file in file_list:
         session, x, y, prediction, cost, tf_graph = restore_rnn(each_file)
@@ -298,6 +306,31 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     print("ALL TESTS FINISHED.")
 
 
+def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold):
+    # GET DATA
+    data_df = dml.get_all_ml_data()
+    tickers = list({t for t in data_df['ticker']})
+    training_df = data_df[data_df.date < test_data_date].copy()
+    test_df = data_df[data_df.date >= test_data_date].copy()
+    del data_df
+
+    for ticker in tickers:
+        print(" ----- Begin Training for {} ----- ".format(ticker))
+        # TRAIN
+        training_data_class = td.TrainingDataTicker(training_df, feature_series_count,
+                                                    feature_count, label_count, ticker)
+        ticker_path = _model_path + ticker + '/'
+        if not os.path.exists(ticker_path):
+            os.makedirs(ticker_path)
+        saved_model_file = train_rnn(training_data_class, ticker_path)
+        saved_model_file = saved_model_file + '.meta'
+
+        # TEST
+        testing_data_class = td.TrainingDataTicker(test_df, feature_series_count,
+                                                   feature_count, label_count, ticker)
+        test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [saved_model_file])
+
+
 def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold):
     # GET DATA
     data_df = dml.get_all_ml_data()
@@ -308,8 +341,8 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     # TRAIN
     training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
     # TODO: switch rnn to use batch data, testing below
-    fff, lll, ddd = training_data_class.get_batch(3)
-    train_rnn(training_data_class)
+    # fff, lll, ddd = training_data_class.get_batch(3)
+    train_rnn(training_data_class, _model_path)
 
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
@@ -329,9 +362,9 @@ def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_th
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:
-        get_data_and_test_rnn(4000, 4000, 0.8, 0.7, sys.argv[2])
+        get_data_and_test_rnn(4000, 4000, 0.8, 0.7, [sys.argv[2]])
     elif len(sys.argv) > 1:
         if sys.argv[1] == "test":
             get_data_and_test_rnn(4000, 4000, 0.8, 0.7)
     else:
-        get_data_train_and_test_rnn(4000, 4000, 0.8, 0.7)
+        train_and_test_by_ticker(4000, 4000, 0.8, 0.7)
