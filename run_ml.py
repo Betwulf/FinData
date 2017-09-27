@@ -17,9 +17,9 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
-epochs = 1000000  # 1600000
-display_step = 100000  # 10000
-save_step = 100000  # 100000
+epochs = 200000  # 1600000
+display_step = 10000  # 10000
+save_step = 10000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
@@ -89,9 +89,9 @@ def build_rnn():
         x3 = tf.split(x2, num_or_size_splits=feature_series_count, axis=0, name="x3")
 
         # 2-layer LSTM, each layer has n_hidden units.
-        rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(hidden_neurons),
-                                     rnn.BasicLSTMCell(hidden_neurons),
-                                     rnn.BasicLSTMCell(last_hidden_neurons)])
+        rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(hidden_neurons, activation=tf.nn.relu),
+                                     rnn.BasicLSTMCell(hidden_neurons, activation=tf.nn.relu),
+                                     rnn.BasicLSTMCell(last_hidden_neurons, activation=tf.nn.relu)])
 
         # trying to save state or rnn, this should work
         # states = get_state_variables(feature_count, rnn_cell)
@@ -168,7 +168,7 @@ def train_rnn(training_data_cls):
                 cost_total += cost_out
                 average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
                 acc_total += 1 - min([average_difference, 1])
-                if ((step+1) % display_step == 0) or step == 0:
+                if (step+1) % display_step == 0:
                     the_curr_time = datetime.datetime.now().strftime('%X')
                     print_string = "Time: {}".format(the_curr_time)
                     print_string += " Iter= " + str(step+1)

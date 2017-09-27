@@ -213,8 +213,9 @@ def get_all_fundamental_data():
     total_count = len(fundamental_file_list)
     for file_found in fundamental_file_list:
         if (file_found != _fundamental_path + _combined_filename) & file_found.endswith('.csv'):
-            if counter % int(total_count / 10) == 0:
-                print("   {0:.0f}% done...".format((counter / total_count) * 100))
+            if total_count > 10:
+                if counter % int(total_count / 10) == 0:
+                    print("   {0:.0f}% done...".format((counter / total_count) * 100))
             counter += 1
             with open(file_found, 'rt') as f:
                 current_data = pd.read_csv(f, index_col=0)

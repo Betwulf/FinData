@@ -40,9 +40,15 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
     print(print_string)
 
     print_string = "          - "
-    print_string += " , buy thresh= {:1.2f}".format(buy_threshold)
+    print_string += "buy thresh= {:1.2f}".format(buy_threshold)
     print_string += " , sell thresh= {:1.2f}".format(sell_threshold)
     print_string += " , diff thresh= {:1.2f}".format(difference_threshold)
+
+    print(print_string)
+
+    print_string = "          - "
+    print_string += "max pos % = {:1.2f}".format(max_position_percent)
+    print_string += " , pred file = {}".format(prediction_file)
 
     print(print_string)
 
@@ -79,7 +85,7 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
 @timing
 def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold,
              max_position_percent, trx_cost, prediction_price_df):
-
+    print("Begin Simulation...")
     transactions_df = pd.DataFrame(columns=_get_transaction_columns())
     positions_df = pd.DataFrame(columns=_get_position_columns())
     old_positions_df = pd.DataFrame(columns=_get_position_columns())
@@ -103,9 +109,12 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
         if curr_date > old_date:
             # set quantities for transactions, save them to the main set, and clear temp set
             new_positions_df = pd.DataFrame(columns=_get_position_columns())
-            new_position_count = len(old_positions_df) + len(curr_buys) - len(curr_sells)
-            curr_total_value = old_positions_df['value'].sum()
-            target_position_value = min(max_position_percent*curr_total_value, curr_total_value/(new_position_count+1.0))
+            # new position count minus 1 for the cash position
+            new_position_count = float(len(old_positions_df) + len(curr_buys) - len(curr_sells) - 1)
+            curr_total_value = max(old_positions_df['value'].sum(), curr_cash)
+            target_position_value = min(max_position_percent * curr_total_value,
+                                        curr_total_value/(max(new_position_count, 1.0)))
+            print("target position value : {} ".format(target_position_value))
             # rebal tickers that are staying
             for a_ticker, a_price, a_buy_bool in curr_rebalances:
                 a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
@@ -179,10 +188,20 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
             curr_buys.append((curr_ticker, row['adj. close']))
 
     # The main loop is over, save to disk the results
+    print(" --- Sim Complete --- ")
+    print("curr_buys")
     print(curr_buys)
     positions_df.reset_index(drop=True, inplace=True)
     transactions_df.reset_index(drop=True, inplace=True)
-    print(positions_df)
+    transactions_df['buy'] = transactions_df['buy'].astype(int)
+    transactions_df['sell'] = transactions_df['sell'].astype(int)
+    transactions_df['rebalance'] = transactions_df['rebalance'].astype(int)
+    print("positions")
+    print(positions_df.describe())
+    print("positions tail")
+    print(positions_df.tail())
+    print("transactions")
+    print(transactions_df.describe())
     with open(_sim_positions_file, 'wt', encoding='utf-8') as f:
         positions_df.to_csv(f)
     with open(_sim_transactions_file, 'wt', encoding='utf-8') as f:
@@ -199,4 +218,4 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 0.05, 0.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 1.0, 0.0, rml.prediction_file)
