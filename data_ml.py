@@ -82,9 +82,6 @@ def ticker_data():
             sub_df = None
             print("--- CANNOT merge data for ticker {}".format(ticker))
         else:
-            with open('c:/Temp/temp.' + _get_calc_filename(ticker) + '.csv', 'wt', encoding='utf-8') as f:
-                f.write(sub_df.to_csv())
-
             print('ticker: {} - rows: {}'.format(ticker, len(sub_df)))
             start_date = sub_df.head(1)['date'].iloc[0]
             end_date = sub_df.tail(1)['date'].iloc[0]
