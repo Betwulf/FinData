@@ -117,6 +117,10 @@ class TrainingDataTicker:
         self.ticker_df.sort_values('date', inplace=True)
         self.ticker_df.reset_index(drop=True, inplace=True)
         self.ticker_df_curr_row = 0
+        if len(self.ticker_df) == 0:
+            error_string = "NO data - {}".format(ticker)
+            print(error_string)
+            raise ValueError(error_string)
         if len(self.ticker_df) < feature_series_count:
             error_string = "not enough data - {} - {}".format(self.ticker_df['date'][0], self.ticker_df['ticker'][0])
             print(error_string)

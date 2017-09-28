@@ -17,7 +17,7 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
-epochs = 250000  # 1600000
+epochs = 150000  # 1600000
 display_step = 10000  # 10000
 save_step = 50000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
@@ -313,6 +313,7 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
     training_df = data_df[data_df.date < test_data_date].copy()
     test_df = data_df[data_df.date >= test_data_date].copy()
     del data_df
+    prediction_files = []
 
     for ticker in tickers:
         print(" ----- Begin Training for {} ----- ".format(ticker))
@@ -324,11 +325,33 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
             os.makedirs(ticker_path)
         saved_model_file = train_rnn(training_data_class, ticker_path)
         saved_model_file = saved_model_file + '.meta'
+        prediction_files.append(saved_model_file  + '.csv')
 
         # TEST
         testing_data_class = td.TrainingDataTicker(test_df, feature_series_count,
                                                    feature_count, label_count, ticker)
         test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [saved_model_file])
+
+        merge_predictions(prediction_files)
+
+
+def merge_predictions(prediction_files):
+    try:
+        file_out = open(prediction_file, "wt", encoding='utf-8')
+        # first file:
+        for line in open(prediction_files[0], "rt", encoding='utf-8'):
+            file_out.write(line)
+        # now the rest:
+        for num in range(1, len(prediction_files) - 1):
+            f = open(prediction_files[num], "rt", encoding='utf-8')
+            f.next()  # skip the header
+            for line in f:
+                file_out.write(line)
+            f.close()  # not really needed
+    except ValueError as ve:
+        print(ve)
+    finally:
+        file_out.close()
 
 
 def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold):
@@ -360,11 +383,32 @@ def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_th
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file)
 
 
+def get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file):
+    # Get ticker
+    parse_filename = specific_file.replace('\\', "/")
+    print(parse_filename)
+    print(parse_filename.split("/")[-2])
+    ticker = "WIKI/" + parse_filename.split("/")[-2]
+    print("Using ticker - {}".format(ticker))
+
+    # GET DATA
+    data_df = dml.get_all_ml_data()
+    test_df = data_df[data_df.date >= test_data_date].copy()
+    del data_df
+
+    # TEST
+    testing_data_class = td.TrainingDataTicker(test_df, feature_series_count, feature_count, label_count, ticker)
+    test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [specific_file])
+
+
 if __name__ == '__main__':
+    # the_file = 'C:\\Temp\\Python\\FinData\\model\\WIKI\\ADM\\findata.250000.meta'
+    # get_data_and_test_rnn_by_ticker(4000, 4000, 0.8, 0.7, the_file)
     if len(sys.argv) > 2:
-        get_data_and_test_rnn(4000, 4000, 0.8, 0.7, [sys.argv[2]])
+        get_data_and_test_rnn_by_ticker(4000, 4000, 0.6, 0.6, str(sys.argv[2]))
     elif len(sys.argv) > 1:
+        # TODO: This part is broken now
         if sys.argv[1] == "test":
-            get_data_and_test_rnn(4000, 4000, 0.8, 0.7)
+            get_data_and_test_rnn_by_ticker(4000, 4000, 0.6, 0.6)
     else:
-        train_and_test_by_ticker(4000, 4000, 0.8, 0.7)
+        train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
