@@ -325,14 +325,25 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
                                                        feature_count, label_count, ticker)
             # TRAIN
             ticker_path = _model_path + ticker + '/'
-            if not os.path.exists(ticker_path):
+            if os.path.exists(ticker_path):
+                print("Found ticker directory, skipping {}".format(ticker))
+                # add existing file to predictions list
+                file_list = [ticker_path + a_file for a_file in os.listdir(ticker_path)]
+                if len(file_list) > 0:
+                    latest_file = max(file_list, key=os.path.getmtime)
+                    if latest_file.endswith('.csv'):
+                        print("adding prediction file: {}".format(latest_file))
+                        prediction_files.append(latest_file)
+                    else:
+                        print("couldn't find csv as latest file in {}".format(ticker_path))
+            else:
                 os.makedirs(ticker_path)
-            saved_model_file = train_rnn(training_data_class, ticker_path)
-            saved_model_file = saved_model_file + '.meta'
-            prediction_files.append(saved_model_file  + '.csv')
+                saved_model_file = train_rnn(training_data_class, ticker_path)
+                saved_model_file = saved_model_file + '.meta'
+                prediction_files.append(saved_model_file + '.csv')
 
-            # TEST
-            test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [saved_model_file])
+                # TEST
+                test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [saved_model_file])
         except ValueError as ve:
             print(ve)
 
