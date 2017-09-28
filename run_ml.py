@@ -219,7 +219,7 @@ def train_rnn(training_data_cls, train_model_path):
 def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, sell_threshold, specific_files=None):
     the_curr_time = datetime.datetime.now().strftime('%X')
     print_string = "Time: {}".format(the_curr_time)
-    print("Start testing model...{}".format(print_string))
+    print("START TESTING MODEL...{}".format(print_string))
 
     predictions_df = pd.DataFrame(columns=('model_file', 'date', 'ticker',
                                            'buy_prediction', 'buy_signal', 'sell_prediction', 'sell_signal'))
@@ -316,23 +316,28 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
     prediction_files = []
 
     for ticker in tickers:
-        print(" ----- Begin Training for {} ----- ".format(ticker))
-        # TRAIN
-        training_data_class = td.TrainingDataTicker(training_df, feature_series_count,
-                                                    feature_count, label_count, ticker)
-        ticker_path = _model_path + ticker + '/'
-        if not os.path.exists(ticker_path):
-            os.makedirs(ticker_path)
-        saved_model_file = train_rnn(training_data_class, ticker_path)
-        saved_model_file = saved_model_file + '.meta'
-        prediction_files.append(saved_model_file  + '.csv')
+        try:
+            print(" ----- Begin Training for {} ----- ".format(ticker))
+            # DATA
+            training_data_class = td.TrainingDataTicker(training_df, feature_series_count,
+                                                        feature_count, label_count, ticker)
+            testing_data_class = td.TrainingDataTicker(test_df, feature_series_count,
+                                                       feature_count, label_count, ticker)
+            # TRAIN
+            ticker_path = _model_path + ticker + '/'
+            if not os.path.exists(ticker_path):
+                os.makedirs(ticker_path)
+            saved_model_file = train_rnn(training_data_class, ticker_path)
+            saved_model_file = saved_model_file + '.meta'
+            prediction_files.append(saved_model_file  + '.csv')
 
-        # TEST
-        testing_data_class = td.TrainingDataTicker(test_df, feature_series_count,
-                                                   feature_count, label_count, ticker)
-        test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [saved_model_file])
+            # TEST
+            test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [saved_model_file])
+        except ValueError as ve:
+            print(ve)
 
-        merge_predictions(prediction_files)
+    # GENERATE PREDICTION AGGREGATE FILE
+    merge_predictions(prediction_files)
 
 
 def merge_predictions(prediction_files):

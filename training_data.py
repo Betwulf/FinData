@@ -146,6 +146,6 @@ class TrainingDataTicker:
             self.ticker_df_curr_row = 0  # we have exhausted this tickers data
             if until_exhausted:
                 return None, None, None
-            print("Exhausted data for {}".format(self.ticker))
+            # print("Exhausted data for {}".format(self.ticker))
         return feature_shaped, label_array, descriptive_df
 
