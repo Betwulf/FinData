@@ -352,15 +352,15 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
 
 
 def merge_predictions(prediction_files):
+    file_out = open(prediction_file, "wt", encoding='utf-8')
     try:
-        file_out = open(prediction_file, "wt", encoding='utf-8')
         # first file:
         for line in open(prediction_files[0], "rt", encoding='utf-8'):
             file_out.write(line)
         # now the rest:
         for num in range(1, len(prediction_files) - 1):
             f = open(prediction_files[num], "rt", encoding='utf-8')
-            f.next()  # skip the header
+            f.readline()  # skip the header
             for line in f:
                 file_out.write(line)
             f.close()  # not really needed

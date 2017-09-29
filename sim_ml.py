@@ -26,16 +26,17 @@ def add_a_day(a_date):
     return a_date + datetime.timedelta(days=1)
 
 
-def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold, difference_threshold,
+def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold, difference_threshold, sell_age,
                  max_position_percent, trx_cost, prediction_file):
 
     the_curr_time = datetime.datetime.now().strftime('%X')
     print("Starting All Simulations... time: {}".format(the_curr_time))
 
-    print_string = "   params - "
+    print_string = "   params -"
     print_string += " DATE: " + start_date.strftime('%x')
     print_string += " - " + end_date.strftime('%x')
     print_string += " : fees= {:2.2f}".format(trx_cost)
+    print_string += " : sell age= {}".format(sell_age)
 
     print(print_string)
 
@@ -64,6 +65,7 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
     model_file_list = set(predictions_df['model_file'].values)
 
     for model_file in model_file_list:
+        print("Starting model file: {}".format(model_file))
         model_predictions_df = predictions_df[predictions_df.model_file == model_file].copy()
         # convert datetime column
         model_predictions_df['date'] = model_predictions_df['date'].apply(pd.to_datetime)
@@ -72,18 +74,20 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
         # so adjust the days of the predictions to be applied to the next days' prices
         model_predictions_df['date'] = model_predictions_df['date'].apply(add_a_day)
 
+        print("merging prices and predictions....")
         prediction_price_df = pd.merge(prices_df, model_predictions_df, how='inner', on=['date', 'ticker'])
         prediction_price_df = prediction_price_df[(start_date <= prediction_price_df.date) &
                                                   (prediction_price_df.date <= end_date)].copy()
+        print("ordering data by date....")
         prediction_price_df.sort_values('date', inplace=True)
         prediction_price_df.reset_index(drop=True, inplace=True)
 
-        simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold,
+        simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold, sell_age,
                  max_position_percent, trx_cost, prediction_price_df)
 
 
 @timing
-def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold,
+def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold, sell_age,
              max_position_percent, trx_cost, prediction_price_df):
     print("Begin Simulation...")
     transactions_df = pd.DataFrame(columns=_get_transaction_columns())
@@ -104,6 +108,9 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
         # initial setup for old_date
         if old_date is None:
             old_date = curr_date
+            # Add cash as a position
+            new_position = [model_file, '$', curr_date, curr_cash, 1, curr_cash, 0]
+            old_positions_df.loc[old_positions_df.shape[0]] = new_position
 
         # check to see if the date is rolling forward
         if curr_date > old_date:
@@ -111,25 +118,41 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
             new_positions_df = pd.DataFrame(columns=_get_position_columns())
             # new position count minus 1 for the cash position
             new_position_count = float(len(old_positions_df) + len(curr_buys) - len(curr_sells) - 1)
-            curr_total_value = max(old_positions_df['value'].sum(), curr_cash)
+            curr_total_value = max(old_positions_df['value'].sum(), curr_cash)  # should not need max anymore
             target_position_value = min(max_position_percent * curr_total_value,
                                         curr_total_value/(max(new_position_count, 1.0)))
-            print("target position value : {} ".format(target_position_value))
-            # rebal tickers that are staying
-            for a_ticker, a_price, a_buy_bool in curr_rebalances:
-                a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
-                old_quantity = a_row_df['quantity'].iloc[0]
-                old_age = a_row_df['age'].iloc[0]
-                rebal_quantity = (target_position_value - old_quantity * a_price) / a_price
-                ttl_trx_cost = rebal_quantity*a_price - trx_cost
-                new_transaction = [model_file, a_ticker, curr_date, a_price, rebal_quantity,
-                                   trx_cost, ttl_trx_cost, False, False, True]
-                transactions_df.loc[transactions_df.shape[0]] = new_transaction
-                curr_cash += -rebal_quantity*a_price - trx_cost
-                new_quantity = old_quantity + rebal_quantity
-                new_age = 0 if a_buy_bool else old_age + 1
-                new_position = [model_file, a_ticker, curr_date, a_price, new_quantity, a_price*new_quantity, new_age]
-                new_positions_df.loc[new_positions_df.shape[0]] = new_position
+            print("date: {} \t value: {:7.2f}".format(old_date.strftime('%x'), curr_total_value))
+            # rebalance tickers that are staying, only if there is a trade
+            if len(curr_buys) == 0:
+                # need to create positions for the day
+                for a_ticker, a_price, a_buy_bool in curr_rebalances:
+                    a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
+                    old_quantity = a_row_df['quantity'].iloc[0]
+                    old_age = a_row_df['age'].iloc[0]
+                    new_value = old_quantity * a_price
+                    new_age = 0 if a_buy_bool else old_age + 1
+                    if new_age < sell_age:
+                        new_position = [model_file, a_ticker, curr_date, a_price, old_quantity, new_value, new_age]
+                        new_positions_df.loc[new_positions_df.shape[0]] = new_position
+                    else:
+                        # need to sell old signal off
+                        curr_sells.append((a_ticker, a_price))
+            else:
+                # need to rebal to make cash for new buys
+                for a_ticker, a_price, a_buy_bool in curr_rebalances:
+                    a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
+                    old_quantity = a_row_df['quantity'].iloc[0]
+                    old_age = a_row_df['age'].iloc[0]
+                    rebal_quantity = (target_position_value - old_quantity * a_price) / a_price
+                    ttl_trx_cost = rebal_quantity*a_price - trx_cost
+                    new_transaction = [model_file, a_ticker, curr_date, a_price, rebal_quantity,
+                                       trx_cost, ttl_trx_cost, False, False, True]
+                    transactions_df.loc[transactions_df.shape[0]] = new_transaction
+                    curr_cash += -rebal_quantity*a_price - trx_cost
+                    new_quantity = old_quantity + rebal_quantity
+                    new_age = 0 if a_buy_bool else old_age + 1
+                    new_position = [model_file, a_ticker, curr_date, a_price, new_quantity, a_price*new_quantity, new_age]
+                    new_positions_df.loc[new_positions_df.shape[0]] = new_position
 
             # buy new tickers
             for a_ticker, a_price in curr_buys:
@@ -146,8 +169,8 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
             for a_ticker, a_price in curr_sells:
                 a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
                 if len(a_row_df) == 0:
-                    print("what?")
-                old_quantity = a_row_df['quantity'][0]
+                    print("can't sell what you don't have.... CRASH")
+                old_quantity = a_row_df['quantity'].iloc[0]
                 ttl_trx_cost = - a_price*old_quantity - trx_cost
                 new_transaction = [model_file, a_ticker, curr_date, a_price, old_quantity,
                                    trx_cost, ttl_trx_cost, False, True, False]
@@ -218,4 +241,4 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 1.0, 0.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 20, 0.25, 0.0, rml.prediction_file)
