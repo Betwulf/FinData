@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import numpy as np
 import pandas as pd
 import data_ml as dml
@@ -8,6 +9,7 @@ import tensorflow as tf
 from tensorflow.contrib import rnn
 import datetime
 import training_data as td
+
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -210,7 +212,8 @@ def train_rnn(training_data_cls, train_model_path):
 
             # Save the variables to disk.
             save_path = saver.save(session, _name_model_file_from_path(train_model_path, epochs))
-            cost_df.to_csv(train_model_path + "cost.csv")
+            # Can't make cost files in model path anymore, will throw off prediction aggregation
+            # cost_df.to_csv(train_model_path + "cost.csv")
             print("Model saved in file: %s" % save_path)
             return save_path
 
@@ -376,13 +379,11 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     training_df = data_df[data_df.date < test_data_date].copy()
     test_df = data_df[data_df.date >= test_data_date].copy()
     del data_df
-
     # TRAIN
     training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
     # TODO: switch rnn to use batch data, testing below
     # fff, lll, ddd = training_data_class.get_batch(3)
     train_rnn(training_data_class, _model_path)
-
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
@@ -393,7 +394,6 @@ def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_th
     data_df = dml.get_all_ml_data()
     test_df = data_df[data_df.date >= test_data_date].copy()
     del data_df
-
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file)
@@ -403,18 +403,25 @@ def get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshol
     # Get ticker
     parse_filename = specific_file.replace('\\', "/")
     print(parse_filename)
-    print(parse_filename.split("/")[-2])
     ticker = "WIKI/" + parse_filename.split("/")[-2]
     print("Using ticker - {}".format(ticker))
-
     # GET DATA
     data_df = dml.get_all_ml_data()
     test_df = data_df[data_df.date >= test_data_date].copy()
     del data_df
-
     # TEST
     testing_data_class = td.TrainingDataTicker(test_df, feature_series_count, feature_count, label_count, ticker)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [specific_file])
+
+
+def get_data_and_test_all(test_epochs, test_display_step, buy_threshold, sell_threshold):
+    # TODO: instead of a file search, use checkpoints to get latest meta in each directory
+    meta_files = [f for f in glob.glob(_model_path + "**\\*.meta", recursive=True)]
+    for file in meta_files:
+        get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold, file)
+    # merge predictions
+    prediction_files = [f for f in glob.glob(_model_path + "**\\*.csv", recursive=True)]
+    merge_predictions(prediction_files)
 
 
 if __name__ == '__main__':
@@ -423,8 +430,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         get_data_and_test_rnn_by_ticker(4000, 4000, 0.6, 0.6, str(sys.argv[2]))
     elif len(sys.argv) > 1:
-        # TODO: This part is broken now
         if sys.argv[1] == "test":
-            get_data_and_test_rnn_by_ticker(4000, 4000, 0.6, 0.6)
+            get_data_and_test_all(4000, 4000, 0.6, 0.6)
     else:
         train_and_test_by_ticker(4000, 4000, 0.6, 0.6)

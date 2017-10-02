@@ -11,10 +11,12 @@ import data_universe as du
 _sim_dir = "\\sim\\"
 _positions_filename = "positions.csv"
 _transactions_filename = "transactions.csv"
+_returns_filename = "returns.csv"
 _cwd = os.getcwd()
 _sim_path = _cwd + _sim_dir
 _sim_positions_file = _sim_path + _positions_filename
 _sim_transactions_file = _sim_path + _transactions_filename
+_sim_returns_file = _sim_path + _returns_filename
 
 
 # ensure paths are there...
@@ -27,7 +29,7 @@ def add_a_day(a_date):
 
 
 def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold, difference_threshold, sell_age,
-                 max_position_percent, trx_cost, prediction_file):
+                 max_position_percent, trx_fee, prediction_file):
 
     the_curr_time = datetime.datetime.now().strftime('%X')
     print("Starting All Simulations... time: {}".format(the_curr_time))
@@ -35,7 +37,7 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
     print_string = "   params -"
     print_string += " DATE: " + start_date.strftime('%x')
     print_string += " - " + end_date.strftime('%x')
-    print_string += " : fees= {:2.2f}".format(trx_cost)
+    print_string += " : fees= {:2.2f}".format(trx_fee)
     print_string += " : sell age= {}".format(sell_age)
 
     print(print_string)
@@ -83,12 +85,12 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
         prediction_price_df.reset_index(drop=True, inplace=True)
 
         simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold, sell_age,
-                 max_position_percent, trx_cost, prediction_price_df)
+                 max_position_percent, trx_fee, prediction_price_df)
 
 
 @timing
 def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold, sell_age,
-             max_position_percent, trx_cost, prediction_price_df):
+             max_position_percent, trx_fee, prediction_price_df):
     print("Begin Simulation...")
     transactions_df = pd.DataFrame(columns=_get_transaction_columns())
     positions_df = pd.DataFrame(columns=_get_position_columns())
@@ -104,6 +106,7 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
         sell_prediction = row['sell_prediction']
         curr_ticker = row['ticker']
         curr_date = row['date']
+        curr_price = row['adj. close']
 
         # initial setup for old_date
         if old_date is None:
@@ -125,57 +128,57 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
             # rebalance tickers that are staying, only if there is a trade
             if len(curr_buys) == 0:
                 # need to create positions for the day
-                for a_ticker, a_price, a_buy_bool in curr_rebalances:
+                for a_ticker, a_date, a_price, a_buy_bool in curr_rebalances:
                     a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
                     old_quantity = a_row_df['quantity'].iloc[0]
                     old_age = a_row_df['age'].iloc[0]
                     new_value = old_quantity * a_price
                     new_age = 0 if a_buy_bool else old_age + 1
                     if new_age < sell_age:
-                        new_position = [model_file, a_ticker, curr_date, a_price, old_quantity, new_value, new_age]
+                        new_position = [model_file, a_ticker, a_date, a_price, old_quantity, new_value, new_age]
                         new_positions_df.loc[new_positions_df.shape[0]] = new_position
                     else:
                         # need to sell old signal off
-                        curr_sells.append((a_ticker, a_price))
+                        curr_sells.append((a_ticker, a_date, a_price, -666, -666))
             else:
                 # need to rebal to make cash for new buys
-                for a_ticker, a_price, a_buy_bool in curr_rebalances:
+                for a_ticker, a_date, a_price, a_buy_bool in curr_rebalances:
                     a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
                     old_quantity = a_row_df['quantity'].iloc[0]
                     old_age = a_row_df['age'].iloc[0]
                     rebal_quantity = (target_position_value - old_quantity * a_price) / a_price
-                    ttl_trx_cost = rebal_quantity*a_price - trx_cost
-                    new_transaction = [model_file, a_ticker, curr_date, a_price, rebal_quantity,
-                                       trx_cost, ttl_trx_cost, False, False, True]
+                    ttl_trx_cost = -rebal_quantity*a_price - trx_fee
+                    new_transaction = [model_file, a_ticker, a_date, a_price, rebal_quantity,
+                                       trx_fee, ttl_trx_cost, buy_prediction, sell_prediction, False, False, True]
                     transactions_df.loc[transactions_df.shape[0]] = new_transaction
-                    curr_cash += -rebal_quantity*a_price - trx_cost
+                    curr_cash += -rebal_quantity*a_price - trx_fee
                     new_quantity = old_quantity + rebal_quantity
                     new_age = 0 if a_buy_bool else old_age + 1
-                    new_position = [model_file, a_ticker, curr_date, a_price, new_quantity, a_price*new_quantity, new_age]
+                    new_position = [model_file, a_ticker, a_date, a_price, new_quantity, a_price*new_quantity, new_age]
                     new_positions_df.loc[new_positions_df.shape[0]] = new_position
 
             # buy new tickers
-            for a_ticker, a_price in curr_buys:
+            for a_ticker, a_date, a_price, a_buy_prediction, a_sell_prediction in curr_buys:
                 buy_quantity = target_position_value/a_price
-                ttl_trx_cost = target_position_value - trx_cost
-                new_transaction = [model_file, a_ticker, curr_date, a_price, buy_quantity,
-                                   trx_cost, ttl_trx_cost, True, False, False]
+                ttl_trx_cost = -target_position_value - trx_fee
+                new_transaction = [model_file, a_ticker, a_date, a_price, buy_quantity,
+                                   trx_fee, ttl_trx_cost, a_buy_prediction, a_sell_prediction, True, False, False]
                 transactions_df.loc[transactions_df.shape[0]] = new_transaction
-                curr_cash -= target_position_value + trx_cost
-                new_position = [model_file, a_ticker, curr_date, a_price, buy_quantity, a_price * buy_quantity, 0]
+                curr_cash -= target_position_value + trx_fee
+                new_position = [model_file, a_ticker, a_date, a_price, buy_quantity, a_price * buy_quantity, 0]
                 new_positions_df.loc[new_positions_df.shape[0]] = new_position
 
             # sell dying tickers
-            for a_ticker, a_price in curr_sells:
+            for a_ticker, a_date, a_price, a_buy_prediction, a_sell_prediction in curr_sells:
                 a_row_df = old_positions_df.loc[old_positions_df['ticker'] == a_ticker]
                 if len(a_row_df) == 0:
                     print("can't sell what you don't have.... CRASH")
                 old_quantity = a_row_df['quantity'].iloc[0]
-                ttl_trx_cost = - a_price*old_quantity - trx_cost
-                new_transaction = [model_file, a_ticker, curr_date, a_price, old_quantity,
-                                   trx_cost, ttl_trx_cost, False, True, False]
+                ttl_trx_cost = a_price*old_quantity - trx_fee
+                new_transaction = [model_file, a_ticker, a_date, a_price, -old_quantity,
+                                   trx_fee, ttl_trx_cost, a_buy_prediction, a_sell_prediction, False, True, False]
                 transactions_df.loc[transactions_df.shape[0]] = new_transaction
-                curr_cash += a_price*old_quantity - trx_cost
+                curr_cash += a_price*old_quantity - trx_fee
 
             # Add cash as a position
             new_position = [model_file, '$', curr_date, curr_cash, 1, curr_cash, 0]
@@ -203,12 +206,12 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
         if len(owned_df) > 0:
             # If we already own it, go through this logic
             if is_sell:
-                curr_sells.append((curr_ticker, row['adj. close']))
+                curr_sells.append((curr_ticker, curr_date, curr_price, buy_prediction, sell_prediction))
             else:
-                curr_rebalances.append((curr_ticker, row['adj. close'], is_buy))
+                curr_rebalances.append((curr_ticker, curr_date, curr_price, is_buy))
         elif is_buy:
             # don't own any and signal is a buy...
-            curr_buys.append((curr_ticker, row['adj. close']))
+            curr_buys.append((curr_ticker, curr_date, curr_price, buy_prediction, sell_prediction))
 
     # The main loop is over, save to disk the results
     print(" --- Sim Complete --- ")
@@ -216,6 +219,7 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
     print(curr_buys)
     positions_df.reset_index(drop=True, inplace=True)
     transactions_df.reset_index(drop=True, inplace=True)
+    returns_df = calculate_returns(transactions_df)
     transactions_df['buy'] = transactions_df['buy'].astype(int)
     transactions_df['sell'] = transactions_df['sell'].astype(int)
     transactions_df['rebalance'] = transactions_df['rebalance'].astype(int)
@@ -225,14 +229,72 @@ def simulate(model_file, start_cash, buy_threshold, sell_threshold, difference_t
     print(positions_df.tail())
     print("transactions")
     print(transactions_df.describe())
+    print("returns")
+    print(returns_df.describe())
     with open(_sim_positions_file, 'wt', encoding='utf-8') as f:
         positions_df.to_csv(f)
     with open(_sim_transactions_file, 'wt', encoding='utf-8') as f:
         transactions_df.to_csv(f)
+    with open(_sim_returns_file, 'wt', encoding='utf-8') as f:
+        returns_df.to_csv(f)
+
+
+def calculate_returns(transactions_df):
+    returns_df = pd.DataFrame(columns=['model_file', 'buy_date', 'sell_date', 'ticker',
+                                       'buy_prediction', 'sell_prediction', 'real_return', 'pure_return'])
+    model_file_list = set(transactions_df['model_file'].values)
+
+    for model_file in model_file_list:
+        ticker_buy_prediction = {}
+        ticker_buys = {}
+        ticker_sells = {}
+        ticker_buy_date = {}
+        ticker_run_cost = {}
+        ticker_buy_price = {}  # contains the price at the initial buy for pure return, not including rebalances
+        print("Starting model file: {}".format(model_file))
+        model_transactions_df = transactions_df[transactions_df.model_file == model_file].copy()
+        for index, row in model_transactions_df.iterrows():
+            curr_date = row['date']
+            curr_ticker = row['ticker']
+            curr_cost = row['total_cost']
+            curr_price = row['price']
+            curr_buy_prediction = row['buy_prediction']
+            curr_sell_prediction = row['sell_prediction']
+            is_buy = row['buy']
+            is_sell = row['sell']
+            is_rebalance = row['rebalance']
+            if is_buy:
+                ticker_buy_price[curr_ticker] = curr_price
+                ticker_run_cost[curr_ticker] = curr_cost
+                ticker_buy_date[curr_ticker] = curr_date
+                ticker_buy_prediction[curr_ticker] = curr_buy_prediction
+                ticker_buys[curr_ticker] = curr_cost
+                ticker_sells[curr_ticker] = 0.0
+            if is_sell:
+                ticker_sells[curr_ticker] = ticker_sells[curr_ticker] + curr_cost
+                pure_return = curr_price / ticker_buy_price[curr_ticker]
+                real_return = ticker_sells[curr_ticker]/(-ticker_buys[curr_ticker])
+                new_return_row = [model_file, ticker_buy_date[curr_ticker], curr_date, curr_ticker,
+                                  ticker_buy_prediction[curr_ticker], curr_sell_prediction, real_return, pure_return]
+                returns_df.loc[returns_df.shape[0]] = new_return_row
+                ticker_run_cost = {key: val for key, val in ticker_run_cost.items() if key != curr_ticker}
+                ticker_buy_price = {key: val for key, val in ticker_buy_price.items() if key != curr_ticker}
+                ticker_buy_date = {key: val for key, val in ticker_buy_date.items() if key != curr_ticker}
+                ticker_buy_prediction = {key: val for key, val in ticker_buy_prediction.items() if key != curr_ticker}
+                ticker_buys = {key: val for key, val in ticker_buys.items() if key != curr_ticker}
+                ticker_sells = {key: val for key, val in ticker_sells.items() if key != curr_ticker}
+            if is_rebalance:
+                if curr_cost < 0:
+                    ticker_buys[curr_ticker] = ticker_buys[curr_ticker] + curr_cost
+                else:
+                    ticker_sells[curr_ticker] = ticker_sells[curr_ticker] + curr_cost
+            # convert
+    return returns_df
 
 
 def _get_transaction_columns():
-    return ['model_file', 'ticker', 'date', 'price', 'quantity', 'fee', 'total_cost', 'buy', 'sell', 'rebalance']
+    return ['model_file', 'ticker', 'date', 'price', 'quantity', 'fee', 'total_cost',
+            'buy_prediction', 'sell_prediction', 'buy', 'sell', 'rebalance']
 
 
 def _get_position_columns():
@@ -241,4 +303,4 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 20, 0.25, 0.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.6, 0.6, -1.4, 20, 0.25, 10.0, rml.prediction_file)

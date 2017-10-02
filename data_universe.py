@@ -184,13 +184,13 @@ def _any_ticker_files(ticker):
     old_date = last_date
     file_timestamp = datetime.datetime(1900, 1, 1)
     for file_found in file_list:
-        file_timestamp = max(file_timestamp,
-                             datetime.datetime.fromtimestamp(os.path.getmtime(_price_path + file_found)))
         if (file_found.find(_combined_filename) == -1) & file_found.endswith('.csv'):
             file_ticker, file_year, file_month = _parse_filename(file_found)
             if file_ticker == ticker:
                 file_date = datetime.date(file_year, file_month, 1)
                 last_date = max([last_date, file_date])
+                file_timestamp = max(file_timestamp,
+                                     datetime.datetime.fromtimestamp(os.path.getmtime(_price_path + file_found)))
     if old_date == last_date:
         return False, last_date, file_timestamp
     return True, last_date, file_timestamp
@@ -287,7 +287,7 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
-    update_all_fundamental_data()
+    # update_all_fundamental_data()
     # get_all_fundamental_data()
     # create_universe_from_json()
     api_key = ""
