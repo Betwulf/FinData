@@ -425,8 +425,6 @@ def get_data_and_test_all(test_epochs, test_display_step, buy_threshold, sell_th
 
 
 if __name__ == '__main__':
-    # the_file = 'C:\\Temp\\Python\\FinData\\model\\WIKI\\ADM\\findata.250000.meta'
-    # get_data_and_test_rnn_by_ticker(4000, 4000, 0.8, 0.7, the_file)
     if len(sys.argv) > 2:
         get_data_and_test_rnn_by_ticker(4000, 4000, 0.6, 0.6, str(sys.argv[2]))
     elif len(sys.argv) > 1:
