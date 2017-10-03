@@ -416,11 +416,12 @@ def get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshol
 
 def get_data_and_test_all(test_epochs, test_display_step, buy_threshold, sell_threshold):
     # TODO: instead of a file search, use checkpoints to get latest meta in each directory
-    meta_files = [f for f in glob.glob(_model_path + "**\\*.meta", recursive=True)]
+    meta_files = [f for f in glob.glob(_model_path + "**/*.meta", recursive=True)]
+    print(meta_files)
     for file in meta_files:
         get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold, file)
     # merge predictions
-    prediction_files = [f for f in glob.glob(_model_path + "**\\*.csv", recursive=True)]
+    prediction_files = [f for f in glob.glob(_model_path + "**/*.csv", recursive=True)]
     merge_predictions(prediction_files)
 
 
