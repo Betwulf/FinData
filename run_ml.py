@@ -21,7 +21,7 @@ label_count = len(dml.get_label_columns())
 learning_rate = 0.001
 epochs = 150000  # 1600000
 display_step = 10000  # 10000
-save_step = 50000  # 100000
+save_step = 150002  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
@@ -317,6 +317,7 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
     test_df = data_df[data_df.date >= test_data_date].copy()
     del data_df
     prediction_files = []
+    print("BULK TRAINING for {} tickers.".format(len(tickers)))
 
     for ticker in tickers:
         try:
@@ -346,7 +347,8 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
                 prediction_files.append(saved_model_file + '.csv')
 
                 # TEST
-                test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [saved_model_file])
+                test_rnn(testing_data_class, test_epochs, test_display_step,
+                         buy_threshold, sell_threshold, [saved_model_file])
         except ValueError as ve:
             print(ve)
 
