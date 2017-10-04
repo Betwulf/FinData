@@ -303,4 +303,4 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    simulate_all(100000.0, a_start_date, datetime.date.today(), 0.7, 0.7, -1.4, 15, 0.05, 0.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, datetime.datetime(2017, 8, 22), 0.7, 0.7, -1.4, 15, 0.05, 0.0, rml.prediction_file)
