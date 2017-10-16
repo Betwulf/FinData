@@ -25,9 +25,9 @@ save_step = 250002  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
-feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length
-hidden_neurons = 128
-last_hidden_neurons = 32
+feature_series_count = 45  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length
+hidden_neurons = 256
+last_hidden_neurons = 256
 
 # File parameters
 _prediction_dir = "/prediction/"
@@ -96,7 +96,6 @@ def build_rnn():
 
         # 2-layer LSTM, each layer has n_hidden units.
         rnn_cell = rnn.MultiRNNCell([rnn.BasicLSTMCell(hidden_neurons, activation=tf.nn.relu),
-                                     rnn.BasicLSTMCell(hidden_neurons, activation=tf.nn.relu),
                                      rnn.BasicLSTMCell(last_hidden_neurons, activation=tf.nn.relu)])
 
         # trying to save state or rnn, this should work

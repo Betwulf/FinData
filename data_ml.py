@@ -13,9 +13,9 @@ _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 15  # numbers of days in the future to train on
-_forecast_buy_threshold = 3  # train for positive results above this percent return
-_forecast_sell_threshold = -3  # train for positive results below this percent return
+_forecast_days = 5  # numbers of days in the future to train on
+_forecast_buy_threshold = 2  # train for positive results above this percent return
+_forecast_sell_threshold = -2  # train for positive results below this percent return
 _forecast_slope = 0.2  # the steep climb from 0 to 1 as x approaches the threshold precentage
 
 
@@ -294,7 +294,8 @@ def calc_feature_data():
 
                 new_values = [ticker, curr_date, curr_return, year_return, volume_percent, volume_deviation,
                               return_60_day, ma_30_day, ma_60_day, macd,
-                              curr_year_high_pct, stddev_30, stddev_60, stddev_year]
+                              curr_year_high_pct, stddev_30, stddev_60, stddev_year,
+                              roe, rpsop, pb_ratio, pe_ratio, eps, net_margin]
 
                 new_df.loc[i] = new_values
 
@@ -329,7 +330,8 @@ def get_label_columns():
 def get_feature_columns():
     return ['curr_return', 'year_return', 'volume_percent', 'volume_deviation',
             'return_60_day', 'ma_30_day', 'ma_60_day', 'macd',
-            'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year']
+            'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year',
+            'roe', 'rpsop', 'pbratio', 'peratio', 'eps', 'net_margin']
 
 
 def _get_feature_dataframe_columns():
