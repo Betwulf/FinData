@@ -19,13 +19,13 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
-epochs = 250000  # 1600000
-display_step = 10000  # 10000
-save_step = 250002  # 100000
+epochs = 2000000  # 1600000
+display_step = 20000  # 10000
+save_step = 200000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
-feature_series_count = 45  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length
+feature_series_count = 60  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length
 hidden_neurons = 256
 last_hidden_neurons = 256
 
@@ -123,7 +123,8 @@ def build_rnn():
 
 
 def _get_rnn_model_files():
-    return [_model_path + a_file for a_file in os.listdir(_model_path) if ".meta" in a_file]
+    # [_model_path + a_file for a_file in os.listdir(_model_path) if ".meta" in a_file]
+    return [f for f in glob.glob(_model_path + "**/*.meta", recursive=True)]
 
 
 def _name_model_file_from_path(path, steps):
@@ -196,8 +197,8 @@ def train_rnn(training_data_cls, train_model_path):
                     ticker = descriptive_df['ticker'].iloc[-1]
                     data_date = descriptive_df['date'].iloc[-1]
                     print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
-                    print("   Buy - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
-                    print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
+                    print("   Prediction - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                    # print("   Sell - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
                     print("")
                     # print("outputs_out: {}".format(outputs_out))
                 step += 1
@@ -224,11 +225,12 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     print("START TESTING MODEL...{}".format(print_string))
 
     predictions_df = pd.DataFrame(columns=('model_file', 'date', 'ticker',
-                                           'buy_prediction', 'buy_signal', 'sell_prediction', 'sell_signal'))
+                                           'prediction', 'label'))
 
     file_list = _get_rnn_model_files()
     if specific_files is None:
-        file_list = [max(file_list, key=os.path.getmtime)]
+        print("Got these files:")
+        print(file_list)
     else:
         file_list = specific_files
 
@@ -240,7 +242,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
             acc_total = 0.0
             cost_total = 0.0
             buy_accuracy_total = 0.0
-            sell_accuracy_total = 0.0
+            # sell_accuracy_total = 0.0
 
             while step < test_epochs:
                 # get data
@@ -256,7 +258,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                     print(print_string)
 
                     print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / curr_display_steps))
-                    print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / curr_display_steps))
+                    # print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / curr_display_steps))
                     break
 
                 # Run the Optimizer
@@ -266,10 +268,10 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                 cost_total += cost_out
                 buy_accuracy = abs(((0, 1)[label_data[0][0] > buy_threshold]) -
                                    ((0, 1)[prediction_out[0][0] > buy_threshold]))
-                sell_accuracy = abs(((0, 1)[label_data[0][1] > sell_threshold]) -
-                                    ((0, 1)[prediction_out[0][1] > sell_threshold]))
+                # sell_accuracy = abs(((0, 1)[label_data[0][1] > sell_threshold]) -
+                #                     ((0, 1)[prediction_out[0][1] > sell_threshold]))
                 buy_accuracy_total += (1 - buy_accuracy)
-                sell_accuracy_total += (1 - sell_accuracy)
+                # sell_accuracy_total += (1 - sell_accuracy)
                 average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
                 acc_total += 1 - min([average_difference, 1])
 
@@ -277,7 +279,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
                 prediction_row = [each_file, data_date, ticker,
-                                  prediction_out[0][0], label_data[0][0], prediction_out[0][1], label_data[0][1]]
+                                  prediction_out[0][0], label_data[0][0]]
                 predictions_df.loc[predictions_df.shape[0]] = prediction_row
 
                 if (step + 1) % test_display_step == 0:
@@ -289,15 +291,15 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                     print(print_string)
 
                     print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / test_display_step))
-                    print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / test_display_step))
+                    # print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / test_display_step))
                     acc_total = 0.0
                     cost_total = 0.0
                     buy_accuracy_total = 0.0
-                    sell_accuracy_total = 0.0
+                    # sell_accuracy_total = 0.0
                     curr_display_steps = -1
                     print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
-                    print("   Buy  - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
-                    print("   Sell - Actual {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
+                    print("   Prediction - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                    # print("   Sell - Actual:{:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
                     print("")
                 step += 1
                 curr_display_steps += 1
@@ -415,7 +417,7 @@ def get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshol
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold, [specific_file])
 
 
-def get_data_and_test_all(test_epochs, test_display_step, buy_threshold, sell_threshold):
+def get_data_and_test_all_tickers(test_epochs, test_display_step, buy_threshold, sell_threshold):
     # TODO: instead of a file search, use checkpoints to get latest meta in each directory
     meta_files = [f for f in glob.glob(_model_path + "**/*.meta", recursive=True)]
     print(meta_files)
@@ -428,9 +430,15 @@ def get_data_and_test_all(test_epochs, test_display_step, buy_threshold, sell_th
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:
-        get_data_and_test_rnn_by_ticker(4000, 4000, 0.6, 0.6, str(sys.argv[2]))
+        if sys.argv[1] == "testticker":
+            get_data_and_test_rnn_by_ticker(50000, 50000, 0.6, 0.6, [str(sys.argv[2])])
+        elif sys.argv[1] == "test":
+            get_data_and_test_rnn(50000, 50000, 0.03, 0.02, [str(sys.argv[2])])
     elif len(sys.argv) > 1:
-        if sys.argv[1] == "test":
-            get_data_and_test_all(4000, 4000, 0.6, 0.6)
+        if sys.argv[1] == "testticker":
+            get_data_and_test_all_tickers(50000, 50000, 0.6, 0.6)
+        elif sys.argv[1] == "test":
+            get_data_and_test_rnn(50000, 50000, 0.03, 0.02)
     else:
-        train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
+        # train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
+        get_data_train_and_test_rnn(50000, 50000, 0.03, 0.02)

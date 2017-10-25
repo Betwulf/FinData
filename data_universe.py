@@ -85,7 +85,7 @@ def update_price_cache(ticker):
     if fin_data is not None:
         fin_data.columns = [x.lower() for x in fin_data.columns]
         unique_months = {(x.year, x.month) for x in fin_data.index}
-        print(fin_data.head())
+        print(fin_data.tail())
         print("got {} months worth of data.".format(len(unique_months)))
         # Add ticker to the data frame
         fin_data['ticker'] = [ticker for _ in range(len(fin_data[fin_data.columns[0]]))]
@@ -287,8 +287,8 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
-    # update_all_fundamental_data()
-    # get_all_fundamental_data()
+    update_all_fundamental_data()
+    get_all_fundamental_data()
     # create_universe_from_json()
     api_key = ""
     if len(sys.argv) > 1:

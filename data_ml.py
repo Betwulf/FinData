@@ -13,7 +13,7 @@ _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 5  # numbers of days in the future to train on
+_forecast_days = 10  # numbers of days in the future to train on
 _forecast_buy_threshold = 2  # train for positive results above this percent return
 _forecast_sell_threshold = -2  # train for positive results below this percent return
 _forecast_slope = 0.2  # the steep climb from 0 to 1 as x approaches the threshold precentage
@@ -172,11 +172,13 @@ def calc_label_data():
                 future_close = sub_df['adj. close'].iloc[i+_forecast_days]
                 future_return = (future_close/curr_close - 1)*100
 
+                future_return_label = future_close/curr_close - 1
+
                 # Try shaping the label more smoothly
                 buy_label = step(future_return, _forecast_buy_threshold, True)
                 sell_label = step(future_return, _forecast_sell_threshold, False)
 
-                label_row_values = [ticker, curr_date, buy_label, sell_label, future_return]
+                label_row_values = [ticker, curr_date, future_return_label]
                 new_df.loc[i] = label_row_values
 
                 if i > (new_data_size - 2):
@@ -191,6 +193,7 @@ def calc_label_data():
 @timing
 def calc_feature_data():
     """ Generates ml data by calculating specific values off of daily prices """
+    print("Calc feature data")
     # for each ticker, sort and process calculated data for ml
     for ticker, sub_df, percent_done in ticker_data():
 
@@ -229,7 +232,7 @@ def calc_feature_data():
 
                 # Fundamental Measures here - remember to unitize
                 roe = curr_row['roe']
-                eps = curr_row['eps basic']
+                eps = curr_row['eps basic'] / curr_close
                 net_margin = curr_row['net margin']
                 # for PE Ratio i really should be using the total of the past 4 quarters earnings, but can't get that
                 # reliably, as some rows may have been deleted due to missing data
@@ -313,9 +316,14 @@ def _get_calc_filename(ticker, extension=".csv"):
     return '{}{}'.format(ticker, extension)
 
 
+def _create_feature_data_frame(df_size):
+    df_features = pd.DataFrame(index=range(df_size),
+                               columns=(_get_feature_dataframe_columns()))
+    return df_features
+
+
 def _create_training_data_frame(df_size):
-    df_label = pd.DataFrame(index=range(df_size), columns=('ticker', 'date',
-                                                           'buy_label', 'sell_label', 'future_return'))
+    df_label = pd.DataFrame(index=range(df_size), columns=(_get_label_dataframe_columns()))
     return df_label
 
 
@@ -324,7 +332,7 @@ def get_descriptive_columns():
 
 
 def get_label_columns():
-    return ['buy_label', 'sell_label']
+    return ['future_return_label']
 
 
 def get_feature_columns():
@@ -338,11 +346,8 @@ def _get_feature_dataframe_columns():
     return get_descriptive_columns() + get_feature_columns()
 
 
-def _create_feature_data_frame(df_size):
-    # TODO: use column listings above instead of duplicating strings
-    df_features = pd.DataFrame(index=range(df_size),
-                               columns=(_get_feature_dataframe_columns()))
-    return df_features
+def _get_label_dataframe_columns():
+    return get_descriptive_columns() + get_label_columns()
 
 
 def calc_all():
