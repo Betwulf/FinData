@@ -287,8 +287,8 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
-    update_all_fundamental_data()
-    get_all_fundamental_data()
+    # update_all_fundamental_data()
+    # get_all_fundamental_data()
     # create_universe_from_json()
     api_key = ""
     if len(sys.argv) > 1:
