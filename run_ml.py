@@ -438,14 +438,14 @@ def get_data_and_test_all_tickers(test_epochs, test_display_step, buy_threshold,
 if __name__ == '__main__':
     if len(sys.argv) > 2:
         if sys.argv[1] == "testticker":
-            get_data_and_test_rnn_by_ticker(50000, 50000, 0.6, 0.6, [str(sys.argv[2])])
+            get_data_and_test_rnn_by_ticker(200000, 200000, 0.6, 0.6, [str(sys.argv[2])])
         elif sys.argv[1] == "test":
-            get_data_and_test_rnn(50000, 50000, 0.03, 0.02, [str(sys.argv[2])])
+            get_data_and_test_rnn(200000, 200000, 0.03, 0.02, [str(sys.argv[2])])
     elif len(sys.argv) > 1:
         if sys.argv[1] == "testticker":
-            get_data_and_test_all_tickers(50000, 50000, 0.6, 0.6)
+            get_data_and_test_all_tickers(200000, 200000, 0.6, 0.6)
         elif sys.argv[1] == "test":
-            get_data_and_test_rnn(50000, 50000, 0.03, 0.02)
+            get_data_and_test_rnn(200000, 200000, 0.03, 0.02)
     else:
         # train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
-        get_data_train_and_test_rnn(50000, 50000, 0.03, 0.02)
+        get_data_train_and_test_rnn(200000, 200000, 0.03, 0.02)
