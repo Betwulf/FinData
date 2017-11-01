@@ -207,9 +207,9 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
             quantity = target_position_value/aprice
             new_pos = _new_position(model_file, aticker, curr_date, aprice, quantity, target_position_value, 0)
-            curr_cash = curr_cash - target_position_value
-            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee, target_position_value,
-                                       prediction, True, False, False)
+            curr_cash = curr_cash - target_position_value - trx_fee
+            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
+                                       target_position_value - trx_fee, prediction, True, False, False)
             positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
             curr_positions[aticker] = new_pos
@@ -219,18 +219,18 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             aprice = [item[1] for item in day_prices if item[0] == aticker][0]
             prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
             quantity = [q for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]  # should only be one pos
-            curr_cash = curr_cash + quantity*aprice
-            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee, -quantity*aprice,
-                                       prediction, False, True, False)
+            curr_cash = curr_cash + quantity*aprice - trx_fee
+            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
+                                       -quantity*aprice - trx_fee, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
 
         # sell abandoned positions
         for aticker in abandoned_tickers:
             prediction = "-1000.0"
             quantity, aprice = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
-            curr_cash = curr_cash + quantity*aprice
-            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee, -quantity*aprice,
-                                       prediction, False, True, False)
+            curr_cash = curr_cash + quantity*aprice - trx_fee
+            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
+                                       -quantity*aprice - trx_fee, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
 
         # roll forward remaining positions
@@ -256,9 +256,9 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         if not aticker == '$':
             prediction = "-1000.0"
             quantity, aprice = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
-            curr_cash = curr_cash + quantity * aprice
-            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee, -quantity * aprice,
-                                       prediction, False, True, False)
+            curr_cash = curr_cash + quantity * aprice - trx_fee
+            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
+                                       -quantity * aprice - trx_fee, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
     # add cash pos
     new_pos = _new_position(model_file, '$', curr_date, curr_cash, 1, curr_cash, 0)
