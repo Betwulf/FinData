@@ -180,6 +180,9 @@ def calc_label_data():
 
                 label_row_values = [ticker, curr_date, future_return_label]
                 new_df.loc[i] = label_row_values
+                # Now normalize-ish the data by clipping it to acceptable ranges for ML
+                for col in get_label_columns():
+                    new_df[col] = np.clip(new_df[col], -1., 1.)
 
                 if i > (new_data_size - 2):
                     print('date: {} adj close: {:4.3f} - future return: {:3.2f}'.format(

@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import math
 import numpy as np
 import pandas as pd
 import data_ml as dml
@@ -181,8 +182,15 @@ def train_rnn(training_data_cls, train_model_path):
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
                 cost_total += cost_out
-                average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
-                acc_total += 1 - min([average_difference, 1])
+                if math.isnan(cost_total):
+                    print("***NaN *** Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
+                    print("   Prediction - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                    break
+
+
+                # average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
+                close_enough = (prediction_out[0][0] - 0.02) < label_data[0][0] < (prediction_out[0][0] + 0.02)
+                acc_total += 1 - close_enough
                 if (step+1) % display_step == 0:
                     the_curr_time = datetime.datetime.now().strftime('%X')
                     print_string = "Time: {}".format(the_curr_time)
@@ -266,12 +274,11 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                                                        feed_dict={x: feature_data, y: label_data[0]})
 
                 cost_total += cost_out
+                close_enough = (prediction_out[0][0] - 0.02) < label_data[0][0] < (prediction_out[0][0] + 0.02)
+
                 buy_accuracy = abs(((0, 1)[label_data[0][0] > buy_threshold]) -
                                    ((0, 1)[prediction_out[0][0] > buy_threshold]))
-                # sell_accuracy = abs(((0, 1)[label_data[0][1] > sell_threshold]) -
-                #                     ((0, 1)[prediction_out[0][1] > sell_threshold]))
-                buy_accuracy_total += (1 - buy_accuracy)
-                # sell_accuracy_total += (1 - sell_accuracy)
+                buy_accuracy_total += close_enough
                 average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
                 acc_total += 1 - min([average_difference, 1])
 
