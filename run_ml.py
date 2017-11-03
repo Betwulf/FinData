@@ -205,7 +205,7 @@ def train_rnn(training_data_cls, train_model_path):
                     ticker = descriptive_df['ticker'].iloc[-1]
                     data_date = descriptive_df['date'].iloc[-1]
                     print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
-                    print("   Prediction - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                    print("    - Actual: {:1.4f} vs Prediction: {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
                     # print("   Sell - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
                     print("")
                     # print("outputs_out: {}".format(outputs_out))
