@@ -21,7 +21,7 @@ label_count = len(dml.get_label_columns())
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
 epochs = 2000000  # 1600000
-display_step = 20000  # 10000
+display_step = 2000  # 10000
 save_step = 200000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
@@ -190,7 +190,7 @@ def train_rnn(training_data_cls, train_model_path):
 
                 # average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
                 close_enough = (prediction_out[0][0] - 0.02) < label_data[0][0] < (prediction_out[0][0] + 0.02)
-                acc_total += 1 - close_enough
+                acc_total += close_enough
                 if (step+1) % display_step == 0:
                     the_curr_time = datetime.datetime.now().strftime('%X')
                     print_string = "Time: {}".format(the_curr_time)

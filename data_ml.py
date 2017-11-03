@@ -172,7 +172,7 @@ def calc_label_data():
                 future_close = sub_df['adj. close'].iloc[i+_forecast_days]
                 future_return = (future_close/curr_close - 1)*100
 
-                future_return_label = future_close/curr_close - 1
+                future_return_label = (future_close/curr_close)*100
 
                 # Try shaping the label more smoothly
                 buy_label = step(future_return, _forecast_buy_threshold, True)
@@ -181,8 +181,8 @@ def calc_label_data():
                 label_row_values = [ticker, curr_date, future_return_label]
                 new_df.loc[i] = label_row_values
                 # Now normalize-ish the data by clipping it to acceptable ranges for ML
-                for col in get_label_columns():
-                    new_df[col] = np.clip(new_df[col], -1., 1.)
+                # for col in get_label_columns():
+                #     new_df[col] = np.clip(new_df[col], -1., 1.)
 
                 if i > (new_data_size - 2):
                     print('date: {} adj close: {:4.3f} - future return: {:3.2f}'.format(
@@ -354,7 +354,7 @@ def _get_label_dataframe_columns():
 
 
 def calc_all():
-    calc_feature_data()
+    # calc_feature_data()
     calc_label_data()
     df = get_all_feature_data()
     print('--------------------------------------------')
