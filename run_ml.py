@@ -116,7 +116,7 @@ def build_rnn():
         cost = tf.reduce_mean(tf.square(y - prediction[0]), name="cost")
         # optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate, name="rms_optimizer").minimize(cost)
         optimizer = tf.train.AdamOptimizer(learning_rate=0.0001,
-                                           name="adam_optimizer").minimize(cost, global_step=global_step)
+                                           name="adam_optimizer").minimize(cost)  # , global_step=global_step)
 
         # Initializing the variables
         init = tf.global_variables_initializer()

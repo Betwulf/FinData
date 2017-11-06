@@ -187,7 +187,11 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             buy_and_old_position_tickers = list(set(buy_tickers + list(old_positions.keys())))
             new_position_tickers = list(set(buy_and_old_position_tickers) - set(sell_tickers))
             new_position_count = len(new_position_tickers) - 1
+            # remove tickers we have already bought
             new_buy_tickers = list(set(buy_tickers) - set(old_positions.keys()))
+            # add to sell tickers those that are too old, and no longer a buy
+            sell_tickers = list(set(sell_tickers + [t for fil, t, dt, pr, q, tv, age in
+                                                    old_positions.values() if age > sell_age]))
             new_sell_tickers = set(old_positions.keys()) - (set(old_positions.keys()) - set(sell_tickers))
             abandoned_tickers = set(old_positions.keys()) - set(list(zip(*day_prices))[0]) - {'$'}
             rolled_position_tickers = list(set(old_positions.keys()) - set(sell_tickers) -
@@ -206,7 +210,8 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             aprice = [item[1] for item in day_prices if item[0] == aticker][0]
             prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
             quantity = target_position_value/aprice
-            new_pos = _new_position(model_file, aticker, curr_date, aprice, quantity, target_position_value, 0)
+            new_pos = _new_position(model_file, aticker, curr_date, aprice, quantity,
+                                    target_position_value, 0)
             curr_cash = curr_cash - target_position_value - trx_fee
             new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
                                        target_position_value - trx_fee, prediction, True, False, False)
@@ -220,7 +225,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
             quantity = [q for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]  # should only be one pos
             curr_cash = curr_cash + quantity*aprice - trx_fee
-            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
+            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, -quantity, trx_fee,
                                        -quantity*aprice - trx_fee, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
 
@@ -229,24 +234,41 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             prediction = "-1000.0"
             quantity, aprice = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
             curr_cash = curr_cash + quantity*aprice - trx_fee
-            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
+            new_trx = _new_transaction(model_file, aticker, curr_date, aprice, -quantity, trx_fee,
                                        -quantity*aprice - trx_fee, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
 
-        # roll forward remaining positions
+        # roll forward or rebalance remaining positions
         for aticker in rolled_position_tickers:
-            aprice = [item[1] for item in day_prices if item[0] == aticker][0]
-            prediction = [item[1] for item in day_predictions if item[0] == aticker][0]  # for debug, delete later
-            quantity, age = [(q, age) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
-            new_pos = _new_position(model_file, aticker, curr_date, aprice, quantity, quantity*aprice, age + 1)
-            positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
-            curr_positions[aticker] = new_pos
+            # If we are buying, then we need to free up cash by rebalancing
+            if len(new_buy_tickers) > 0:
+                aprice = [item[1] for item in day_prices if item[0] == aticker][0]
+                prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
+                quantity, age = [(q, age) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
+                new_age = (age + 1, 0)[aticker in buy_tickers]
+                new_quantity = target_position_value/aprice
+                diff_quantity = new_quantity - quantity
+                diff_value = aprice*diff_quantity - trx_fee
+                new_pos = _new_position(model_file, aticker, curr_date, aprice, new_quantity, target_position_value, new_age)
+                curr_cash = curr_cash - diff_value
+                new_trx = _new_transaction(model_file, aticker, curr_date, aprice, diff_quantity, trx_fee,
+                                           diff_value, prediction, False, False, True)
+                positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
+                transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
+                curr_positions[aticker] = new_pos
+            else:
+                aprice = [item[1] for item in day_prices if item[0] == aticker][0]
+                quantity, age = [(q, age) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
+                new_age = (age + 1, 0)[aticker in buy_tickers]
+                new_pos = _new_position(model_file, aticker, curr_date, aprice, quantity, quantity*aprice, new_age)
+                positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
+                curr_positions[aticker] = new_pos
 
         # add cash pos
         new_pos = _new_position(model_file, '$', curr_date, curr_cash, 1, curr_cash, 0)
         positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
         curr_positions['$'] = new_pos
-
+        # update old for next loop
         old_positions = curr_positions
         old_date = curr_date
 
@@ -265,7 +287,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
     positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
     curr_positions['$'] = new_pos
 
-    print(" --- Sim Complete --- ")
+    print(" --- Sim Complete --- ... time: {}".format(datetime.datetime.now().strftime('%X')))
     print("latest buy signals: date: {}".format(curr_date.strftime('%x')))
     print(buy_tickers)
 
@@ -618,11 +640,15 @@ def calculate_returns(transactions_df):
                 ticker_run_cost[curr_ticker] = curr_cost
                 ticker_buy_date[curr_ticker] = curr_date
                 ticker_buy_prediction[curr_ticker] = curr_buy_prediction
-                ticker_buys[curr_ticker] = curr_cost
+                ticker_buys[curr_ticker] = -curr_cost
                 ticker_sells[curr_ticker] = 0.0
             if is_sell:
                 ticker_sells[curr_ticker] = ticker_sells[curr_ticker] + curr_cost
                 pure_return = curr_price / ticker_buy_price[curr_ticker]
+                if curr_ticker == 'WIKI/FSLR':
+                    print("FSLR: {} - {} ... cost: {}".format(ticker_sells[curr_ticker], -ticker_buys[curr_ticker],
+                                                              curr_cost))
+                    print("    : {} , {}".format(ticker_buy_date[curr_ticker], curr_date))
                 real_return = ticker_sells[curr_ticker]/(-ticker_buys[curr_ticker])
                 new_return_row = [model_file, ticker_buy_date[curr_ticker], curr_date, curr_ticker,
                                   ticker_buy_prediction[curr_ticker], real_return, pure_return]
@@ -667,4 +693,4 @@ def _get_position_columns():
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
     an_end_date = datetime.datetime(2017, 8, 17)
-    simulate_all(100000.0, a_start_date, an_end_date, 0.03, 0.02, -1.4, 15, 0.05, 0.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, an_end_date, 0.03, 0.02, -1.4, 45, 0.05, 10.0, rml.prediction_file)
