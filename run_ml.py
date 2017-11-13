@@ -21,8 +21,8 @@ label_count = len(dml.get_label_columns())
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
 epochs = 2000000  # 1600000
-display_step = 2000  # 10000
-save_step = 200000  # 100000
+display_step = 5000  # 10000
+save_step = 100000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape

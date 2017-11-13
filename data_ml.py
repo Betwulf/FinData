@@ -27,6 +27,10 @@ if not os.path.exists(_label_path):
     os.makedirs(_label_path)
 
 
+def norm(data_list, min_val=0.5, max_val=1.5):
+    return [(v - min_val) / (max_val - min_val) for v in data_list]
+
+
 def min_max_scale(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
@@ -172,22 +176,24 @@ def calc_label_data():
                 future_close = sub_df['adj. close'].iloc[i+_forecast_days]
                 future_return = (future_close/curr_close - 1)*100
 
-                future_return_label = (future_close/curr_close)*100
+                future_return_label = future_close/curr_close
 
                 # Try shaping the label more smoothly
                 buy_label = step(future_return, _forecast_buy_threshold, True)
                 sell_label = step(future_return, _forecast_sell_threshold, False)
 
-                label_row_values = [ticker, curr_date, future_return_label]
+                label_row_values = [ticker, curr_date, future_return_label, future_return]
                 new_df.loc[i] = label_row_values
-                # Now normalize-ish the data by clipping it to acceptable ranges for ML
-                # for col in get_label_columns():
-                #     new_df[col] = np.clip(new_df[col], -1., 1.)
 
                 if i > (new_data_size - 2):
                     print('date: {} adj close: {:4.3f} - future return: {:3.2f}'.format(
                         curr_date, curr_close, future_return))
                     print('   buy_label: {:1.3f} sell_label: {:1.3f} '.format(buy_label, sell_label))
+            # Now normalize-ish the data by clipping it to acceptable ranges for ML
+            for col in get_label_columns():
+                new_df[col] = norm(new_df[col])
+                new_df[col] = np.clip(new_df[col], -1., 1.)
+            new_df.dropna(how='any')
             # SAVE
             with open(_label_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
                 f.write(new_df.to_csv())
@@ -244,12 +250,20 @@ def calc_feature_data():
                 pb_ratio = (curr_close / curr_row['book value']) / 20.0
                 rpsop = (curr_row['revenue'] / curr_row['shares']) / curr_close
 
-                curr_return = curr_close / prev_row['adj. close'] - 1
+                return_1d = curr_close / prev_row['adj. close'] - 1
                 year_return = curr_close / year_df.iloc[0]['adj. close'] - 1
                 curr_return_open = curr_close / curr_row['adj. open'] - 1
                 curr_return_high = curr_close / curr_row['adj. high'] - 1
                 curr_return_low = curr_close / curr_row['adj. low'] - 1
-                two_days_ago_return = curr_close / two_days_ago_row['adj. close'] - 1
+                return_2d = curr_close / two_days_ago_row['adj. close'] - 1
+                return_3d = curr_close / year_df.iloc[-4]['adj. close'] - 1
+                return_4d = curr_close / year_df.iloc[-5]['adj. close'] - 1
+                return_5d = curr_close / year_df.iloc[-6]['adj. close'] - 1
+                return_6d = curr_close / year_df.iloc[-7]['adj. close'] - 1
+                return_7d = curr_close / year_df.iloc[-8]['adj. close'] - 1
+                return_8d = curr_close / year_df.iloc[-9]['adj. close'] - 1
+                return_9d = curr_close / year_df.iloc[-10]['adj. close'] - 1
+                return_10d = curr_close / year_df.iloc[-11]['adj. close'] - 1
                 curr_year_high_pct = (curr_close - year_low) / (year_high - year_low)
                 curr_year_low_pct = (year_high - curr_close) / (year_high - year_low)
 
@@ -298,7 +312,8 @@ def calc_feature_data():
                           'stddev yr: {:1.3f} MA 60 day: {:1.3f}'.format(return_9_day, stddev_60,
                                                                           stddev_year, ma_60_day))
 
-                new_values = [ticker, curr_date, curr_return, year_return, volume_percent, volume_deviation,
+                new_values = [ticker, curr_date, return_1d, return_2d, return_3d, return_4d, return_5d, return_6d,
+                              return_7d, return_8d, return_9d, return_10d, year_return, volume_percent, volume_deviation,
                               return_60_day, ma_30_day, ma_60_day, macd,
                               curr_year_high_pct, stddev_30, stddev_60, stddev_year]
 
@@ -307,6 +322,13 @@ def calc_feature_data():
             # Now normalize-ish the data by clipping it to acceptable ranges for ML
             for col in get_feature_columns():
                 new_df[col] = np.clip(new_df[col], -1., 1.)
+
+            # drop any rows with nan
+            old_row_count = new_df.shape
+            new_df.dropna(how='any')
+            new_row_count = new_df.shape
+            if new_row_count < old_row_count:
+                print("Features removed - from {} to {}".format(old_row_count, new_row_count))
 
             with open(_feature_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
                 f.write(new_df.to_csv())
@@ -338,7 +360,8 @@ def get_label_columns():
 
 
 def get_feature_columns():
-    return ['curr_return', 'year_return', 'volume_percent', 'volume_deviation',
+    return ['return_1d', 'return_2d', 'return_3d', 'return_4d', 'return_5d', 'return_6d',
+            'return_7d', 'return_8d', 'return_9d', 'return_10d', 'year_return', 'volume_percent', 'volume_deviation',
             'return_60_day', 'ma_30_day', 'ma_60_day', 'macd',
             'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year']
 
@@ -348,12 +371,12 @@ def _get_feature_dataframe_columns():
 
 
 def _get_label_dataframe_columns():
-    return get_descriptive_columns() + get_label_columns()
+    return get_descriptive_columns() + get_label_columns() + ['future_return']
 
 
 def calc_all():
     calc_feature_data()
-    calc_label_data()
+    # calc_label_data()
     df = get_all_feature_data()
     print('--------------------------------------------')
     print('FEATURE DATA {} rows.'.format(len(df)))
