@@ -109,7 +109,10 @@ def _get_aggregated_data(a_path, a_filename):
             all_data['date'].apply(pd.to_datetime)  # TODO: THIS returns the modified column.. test the fix
             return all_data
     print('latest file found: {}'.format(latest_file))
-    print('Reading raw files...')
+    print('Reading raw files... count: {}'.format(len(file_list)))
+    if len(file_list) == 0:
+        print("NO FILES FOUND IN: {}".format(a_path))
+        raise ValueError("NO FILES FOUND IN: {}".format(a_path))
     for file_found in file_list:
         if (file_found != a_path + a_filename) & file_found.endswith('.csv'):
             with open(file_found, 'rt') as f:
@@ -376,7 +379,7 @@ def _get_label_dataframe_columns():
 
 def calc_all():
     calc_feature_data()
-    # calc_label_data()
+    calc_label_data()
     df = get_all_feature_data()
     print('--------------------------------------------')
     print('FEATURE DATA {} rows.'.format(len(df)))

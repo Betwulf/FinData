@@ -182,8 +182,8 @@ def train_rnn(training_data_cls, train_model_path):
                                                           feed_dict={x: feature_data, y: label_data[0]})
 
                 cost_total += cost_out
-                if math.isnan(cost_total):
-                    print("***NaN *** Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
+                if math.isnan(cost_total) or abs(prediction_out[0][0]) > 1000.0:
+                    print("*** WEIRD *** Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
                     print("   Prediction - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
                     break
 

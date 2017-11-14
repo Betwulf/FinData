@@ -693,4 +693,4 @@ def _get_position_columns():
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
     an_end_date = datetime.datetime(2017, 8, 17)
-    simulate_all(100000.0, a_start_date, an_end_date, 0.03, 0.02, -1.4, 45, 0.05, 10.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 45, 0.10, 0.0, rml.prediction_file)
