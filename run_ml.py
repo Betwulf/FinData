@@ -26,9 +26,9 @@ save_step = 100000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
 
 # Parameters for LSTM Shape
-feature_series_count = 60  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length
-hidden_neurons = 256
-last_hidden_neurons = 256
+feature_series_count = 30  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length
+hidden_neurons = 512
+last_hidden_neurons = 512
 
 # File parameters
 _prediction_dir = "/prediction/"
@@ -183,9 +183,12 @@ def train_rnn(training_data_cls, train_model_path):
 
                 cost_total += cost_out
                 if math.isnan(cost_total) or abs(prediction_out[0][0]) > 1000.0:
+                    ticker = descriptive_df['ticker'].iloc[-1]
+                    data_date = descriptive_df['date'].iloc[-1]
                     print("*** WEIRD *** Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
                     print("   Prediction - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
-                    break
+                    if math.isnan(cost_total):
+                        break
 
 
                 # average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))

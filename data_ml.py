@@ -258,6 +258,7 @@ def calc_feature_data():
                 curr_return_open = curr_close / curr_row['adj. open'] - 1
                 curr_return_high = curr_close / curr_row['adj. high'] - 1
                 curr_return_low = curr_close / curr_row['adj. low'] - 1
+                day_returns = [curr_close/x for x in year_df.iloc[-2:-31]['adj. close']]
                 return_2d = curr_close / two_days_ago_row['adj. close'] - 1
                 return_3d = curr_close / year_df.iloc[-4]['adj. close'] - 1
                 return_4d = curr_close / year_df.iloc[-5]['adj. close'] - 1
@@ -267,6 +268,26 @@ def calc_feature_data():
                 return_8d = curr_close / year_df.iloc[-9]['adj. close'] - 1
                 return_9d = curr_close / year_df.iloc[-10]['adj. close'] - 1
                 return_10d = curr_close / year_df.iloc[-11]['adj. close'] - 1
+                return_11d = curr_close / year_df.iloc[-12]['adj. close'] - 1
+                return_12d = curr_close / year_df.iloc[-13]['adj. close'] - 1
+                return_13d = curr_close / year_df.iloc[-14]['adj. close'] - 1
+                return_14d = curr_close / year_df.iloc[-15]['adj. close'] - 1
+                return_15d = curr_close / year_df.iloc[-16]['adj. close'] - 1
+                return_16d = curr_close / year_df.iloc[-17]['adj. close'] - 1
+                return_17d = curr_close / year_df.iloc[-18]['adj. close'] - 1
+                return_18d = curr_close / year_df.iloc[-19]['adj. close'] - 1
+                return_19d = curr_close / year_df.iloc[-20]['adj. close'] - 1
+                return_20d = curr_close / year_df.iloc[-21]['adj. close'] - 1
+                return_21d = curr_close / year_df.iloc[-22]['adj. close'] - 1
+                return_22d = curr_close / year_df.iloc[-23]['adj. close'] - 1
+                return_23d = curr_close / year_df.iloc[-24]['adj. close'] - 1
+                return_24d = curr_close / year_df.iloc[-25]['adj. close'] - 1
+                return_25d = curr_close / year_df.iloc[-26]['adj. close'] - 1
+                return_26d = curr_close / year_df.iloc[-27]['adj. close'] - 1
+                return_27d = curr_close / year_df.iloc[-28]['adj. close'] - 1
+                return_28d = curr_close / year_df.iloc[-29]['adj. close'] - 1
+                return_29d = curr_close / year_df.iloc[-30]['adj. close'] - 1
+                return_30d = curr_close / year_df.iloc[-31]['adj. close'] - 1
                 curr_year_high_pct = (curr_close - year_low) / (year_high - year_low)
                 curr_year_low_pct = (year_high - curr_close) / (year_high - year_low)
 
@@ -316,7 +337,10 @@ def calc_feature_data():
                                                                           stddev_year, ma_60_day))
 
                 new_values = [ticker, curr_date, return_1d, return_2d, return_3d, return_4d, return_5d, return_6d,
-                              return_7d, return_8d, return_9d, return_10d, year_return, volume_percent, volume_deviation,
+                              return_7d, return_8d, return_9d, return_10d, return_11d, return_12d, return_13d,
+                              return_14d, return_15d, return_16d, return_17d, return_18d, return_19d, return_20d,
+                              return_21d, return_22d, return_23d, return_24d, return_25d, return_26d, return_27d,
+                              return_28d, return_29d, return_30d, year_return, volume_percent, volume_deviation,
                               return_60_day, ma_30_day, ma_60_day, macd,
                               curr_year_high_pct, stddev_30, stddev_60, stddev_year]
 
@@ -364,7 +388,10 @@ def get_label_columns():
 
 def get_feature_columns():
     return ['return_1d', 'return_2d', 'return_3d', 'return_4d', 'return_5d', 'return_6d',
-            'return_7d', 'return_8d', 'return_9d', 'return_10d', 'year_return', 'volume_percent', 'volume_deviation',
+            'return_7d', 'return_8d', 'return_9d', 'return_10d', 'return_11d', 'return_12d', 'return_13d',
+            'return_14d', 'return_15d', 'return_16d', 'return_17d', 'return_18d', 'return_19d', 'return_20d',
+            'return_21d', 'return_22d', 'return_23d', 'return_24d', 'return_25d', 'return_26d', 'return_27d',
+            'return_28d', 'return_29d', 'return_30d', 'year_return', 'volume_percent', 'volume_deviation',
             'return_60_day', 'ma_30_day', 'ma_60_day', 'macd',
             'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year']
 
