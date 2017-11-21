@@ -212,9 +212,10 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             quantity = target_position_value/aprice
             new_pos = _new_position(model_file, aticker, curr_date, aprice, quantity,
                                     target_position_value, 0)
-            curr_cash = curr_cash - target_position_value - trx_fee
+            total_cost = -target_position_value - trx_fee
+            curr_cash = curr_cash + total_cost
             new_trx = _new_transaction(model_file, aticker, curr_date, aprice, quantity, trx_fee,
-                                       target_position_value - trx_fee, prediction, True, False, False)
+                                       total_cost, prediction, True, False, False)
             positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
             curr_positions[aticker] = new_pos
@@ -224,18 +225,20 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             aprice = [item[1] for item in day_prices if item[0] == aticker][0]
             prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
             quantity = [q for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]  # should only be one pos
-            curr_cash = curr_cash + quantity*aprice - trx_fee
+            total_cost = quantity*aprice - trx_fee
+            curr_cash = curr_cash + total_cost
             new_trx = _new_transaction(model_file, aticker, curr_date, aprice, -quantity, trx_fee,
-                                       -quantity*aprice - trx_fee, prediction, False, True, False)
+                                       total_cost, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
 
         # sell abandoned positions
         for aticker in abandoned_tickers:
             prediction = "-1000.0"
             quantity, aprice = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
-            curr_cash = curr_cash + quantity*aprice - trx_fee
+            total_cost = quantity * aprice - trx_fee
+            curr_cash = curr_cash + total_cost
             new_trx = _new_transaction(model_file, aticker, curr_date, aprice, -quantity, trx_fee,
-                                       -quantity*aprice - trx_fee, prediction, False, True, False)
+                                       total_cost, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
 
         # roll forward or rebalance remaining positions
@@ -248,9 +251,9 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
                 new_age = (age + 1, 0)[aticker in buy_tickers]
                 new_quantity = target_position_value/aprice
                 diff_quantity = new_quantity - quantity
-                diff_value = aprice*diff_quantity - trx_fee
+                diff_value = -aprice*diff_quantity - trx_fee
                 new_pos = _new_position(model_file, aticker, curr_date, aprice, new_quantity, target_position_value, new_age)
-                curr_cash = curr_cash - diff_value
+                curr_cash = curr_cash + diff_value
                 new_trx = _new_transaction(model_file, aticker, curr_date, aprice, diff_quantity, trx_fee,
                                            diff_value, prediction, False, False, True)
                 positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
@@ -615,6 +618,7 @@ def simulate_one_signal(model_file, start_cash, buy_threshold, sell_threshold, d
 def calculate_returns(transactions_df):
     returns_df = pd.DataFrame(columns=['model_file', 'buy_date', 'sell_date', 'ticker',
                                        'prediction', 'real_return', 'pure_return'])
+    # transactions_df = transactions_df.loc[transactions_df['ticker'] == 'WIKI/FSLR']
     model_file_list = set(transactions_df['model_file'].values)
 
     for model_file in model_file_list:
@@ -640,16 +644,18 @@ def calculate_returns(transactions_df):
                 ticker_run_cost[curr_ticker] = curr_cost
                 ticker_buy_date[curr_ticker] = curr_date
                 ticker_buy_prediction[curr_ticker] = curr_buy_prediction
-                ticker_buys[curr_ticker] = -curr_cost
+                ticker_buys[curr_ticker] = curr_cost
                 ticker_sells[curr_ticker] = 0.0
+                if curr_ticker == 'WIKI/FSLR':
+                    print("FSLR - buy: {}".format(ticker_buys[curr_ticker]))
             if is_sell:
                 ticker_sells[curr_ticker] = ticker_sells[curr_ticker] + curr_cost
                 pure_return = curr_price / ticker_buy_price[curr_ticker]
                 if curr_ticker == 'WIKI/FSLR':
-                    print("FSLR: {} - {} ... cost: {}".format(ticker_sells[curr_ticker], -ticker_buys[curr_ticker],
-                                                              curr_cost))
-                    print("    : {} , {}".format(ticker_buy_date[curr_ticker], curr_date))
-                real_return = ticker_sells[curr_ticker]/(-ticker_buys[curr_ticker])
+                    print("FSLR - got:{} - paid:{} ... sell cost: {}".format(ticker_sells[curr_ticker],
+                                                                             ticker_buys[curr_ticker], curr_cost))
+                    print("                : {} , {}".format(ticker_buy_date[curr_ticker], curr_date))
+                real_return = -ticker_sells[curr_ticker]/ticker_buys[curr_ticker]
                 new_return_row = [model_file, ticker_buy_date[curr_ticker], curr_date, curr_ticker,
                                   ticker_buy_prediction[curr_ticker], real_return, pure_return]
                 returns_df.loc[returns_df.shape[0]] = new_return_row
@@ -662,9 +668,14 @@ def calculate_returns(transactions_df):
             if is_rebalance:
                 if curr_cost < 0:
                     ticker_buys[curr_ticker] = ticker_buys[curr_ticker] + curr_cost
+                    if curr_ticker == 'WIKI/FSLR':
+                        print("FSLR - rebal buy: {} cost: {}".format(ticker_buys[curr_ticker], curr_cost))
                 else:
                     ticker_sells[curr_ticker] = ticker_sells[curr_ticker] + curr_cost
-            # convert
+                    if curr_ticker == 'WIKI/FSLR':
+                        print("FSLR - rebal sell: {} cost: {}".format(ticker_sells[curr_ticker], curr_cost))
+
+                        # convert
     return returns_df
 
 
@@ -693,4 +704,4 @@ def _get_position_columns():
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
     an_end_date = datetime.datetime(2017, 8, 17)
-    simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 45, 0.10, 0.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 45, 0.10, 100.0, rml.prediction_file)
