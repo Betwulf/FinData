@@ -647,12 +647,12 @@ def calculate_returns(transactions_df):
                 ticker_buys[curr_ticker] = curr_cost
                 ticker_sells[curr_ticker] = 0.0
                 if curr_ticker == 'WIKI/FSLR':
-                    print("FSLR - buy: {}".format(ticker_buys[curr_ticker]))
+                    print("FSLR - buy: {:7.2f}".format(ticker_buys[curr_ticker]))
             if is_sell:
                 ticker_sells[curr_ticker] = ticker_sells[curr_ticker] + curr_cost
                 pure_return = curr_price / ticker_buy_price[curr_ticker]
                 if curr_ticker == 'WIKI/FSLR':
-                    print("FSLR - got:{} - paid:{} ... sell cost: {}".format(ticker_sells[curr_ticker],
+                    print("FSLR - got:{:7.2f} - paid:{:7.2f} ... sell cost: {:7.2f}".format(ticker_sells[curr_ticker],
                                                                              ticker_buys[curr_ticker], curr_cost))
                     print("                : {} , {}".format(ticker_buy_date[curr_ticker], curr_date))
                 real_return = -ticker_sells[curr_ticker]/ticker_buys[curr_ticker]
@@ -669,11 +669,11 @@ def calculate_returns(transactions_df):
                 if curr_cost < 0:
                     ticker_buys[curr_ticker] = ticker_buys[curr_ticker] + curr_cost
                     if curr_ticker == 'WIKI/FSLR':
-                        print("FSLR - rebal buy: {} cost: {}".format(ticker_buys[curr_ticker], curr_cost))
+                        print("FSLR - rebal buy: {:7.2f} cost: {:7.2f}".format(ticker_buys[curr_ticker], curr_cost))
                 else:
                     ticker_sells[curr_ticker] = ticker_sells[curr_ticker] + curr_cost
                     if curr_ticker == 'WIKI/FSLR':
-                        print("FSLR - rebal sell: {} cost: {}".format(ticker_sells[curr_ticker], curr_cost))
+                        print("FSLR - rebal sell: {:7.2f} cost: {:7.2f}".format(ticker_sells[curr_ticker], curr_cost))
 
                         # convert
     return returns_df
@@ -704,4 +704,4 @@ def _get_position_columns():
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
     an_end_date = datetime.datetime(2017, 8, 17)
-    simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 45, 0.10, 100.0, rml.prediction_file)
+    simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 45, 0.10, 1.0, rml.prediction_file)

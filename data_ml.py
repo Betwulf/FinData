@@ -258,36 +258,11 @@ def calc_feature_data():
                 curr_return_open = curr_close / curr_row['adj. open'] - 1
                 curr_return_high = curr_close / curr_row['adj. high'] - 1
                 curr_return_low = curr_close / curr_row['adj. low'] - 1
-                day_returns = [curr_close/x for x in year_df.iloc[-2:-31]['adj. close']]
-                return_2d = curr_close / two_days_ago_row['adj. close'] - 1
-                return_3d = curr_close / year_df.iloc[-4]['adj. close'] - 1
-                return_4d = curr_close / year_df.iloc[-5]['adj. close'] - 1
-                return_5d = curr_close / year_df.iloc[-6]['adj. close'] - 1
-                return_6d = curr_close / year_df.iloc[-7]['adj. close'] - 1
-                return_7d = curr_close / year_df.iloc[-8]['adj. close'] - 1
-                return_8d = curr_close / year_df.iloc[-9]['adj. close'] - 1
-                return_9d = curr_close / year_df.iloc[-10]['adj. close'] - 1
-                return_10d = curr_close / year_df.iloc[-11]['adj. close'] - 1
-                return_11d = curr_close / year_df.iloc[-12]['adj. close'] - 1
-                return_12d = curr_close / year_df.iloc[-13]['adj. close'] - 1
-                return_13d = curr_close / year_df.iloc[-14]['adj. close'] - 1
-                return_14d = curr_close / year_df.iloc[-15]['adj. close'] - 1
-                return_15d = curr_close / year_df.iloc[-16]['adj. close'] - 1
-                return_16d = curr_close / year_df.iloc[-17]['adj. close'] - 1
-                return_17d = curr_close / year_df.iloc[-18]['adj. close'] - 1
-                return_18d = curr_close / year_df.iloc[-19]['adj. close'] - 1
-                return_19d = curr_close / year_df.iloc[-20]['adj. close'] - 1
-                return_20d = curr_close / year_df.iloc[-21]['adj. close'] - 1
-                return_21d = curr_close / year_df.iloc[-22]['adj. close'] - 1
-                return_22d = curr_close / year_df.iloc[-23]['adj. close'] - 1
-                return_23d = curr_close / year_df.iloc[-24]['adj. close'] - 1
-                return_24d = curr_close / year_df.iloc[-25]['adj. close'] - 1
-                return_25d = curr_close / year_df.iloc[-26]['adj. close'] - 1
-                return_26d = curr_close / year_df.iloc[-27]['adj. close'] - 1
-                return_27d = curr_close / year_df.iloc[-28]['adj. close'] - 1
-                return_28d = curr_close / year_df.iloc[-29]['adj. close'] - 1
-                return_29d = curr_close / year_df.iloc[-30]['adj. close'] - 1
-                return_30d = curr_close / year_df.iloc[-31]['adj. close'] - 1
+                day_returns = [curr_close/x - 1 for x in year_df.iloc[-31:-1]['adj. close']]
+                return_4d = curr_close / year_df.iloc[-5]['adj. close'] - 1  # DEBUG: REMOVE THIS LATER
+                if not day_returns[-4] == return_4d:
+                    print("RETURN CALC ERROR")
+                    raise ValueError("RETURN CALC ERROR")
                 curr_year_high_pct = (curr_close - year_low) / (year_high - year_low)
                 curr_year_low_pct = (year_high - curr_close) / (year_high - year_low)
 
@@ -330,17 +305,19 @@ def calc_feature_data():
                 if i > (new_size-3):
                     print('date: {} adj close: {:4.3f} - year high: {:3.2f} '
                           'macd: {:1.3f}'.format(curr_date,
-                                                curr_close, curr_year_high_pct, macd))
+                                                 curr_close, curr_year_high_pct, macd))
                     print('   volume %: {:1.3f} volume stddev: {:1.3f} '.format(volume_percent, volume_deviation))
                     print('   9 day rtn: {:1.3f} stddev 60: {:1.3f} '
                           'stddev yr: {:1.3f} MA 60 day: {:1.3f}'.format(return_9_day, stddev_60,
-                                                                          stddev_year, ma_60_day))
+                                                                         stddev_year, ma_60_day))
 
-                new_values = [ticker, curr_date, return_1d, return_2d, return_3d, return_4d, return_5d, return_6d,
-                              return_7d, return_8d, return_9d, return_10d, return_11d, return_12d, return_13d,
-                              return_14d, return_15d, return_16d, return_17d, return_18d, return_19d, return_20d,
-                              return_21d, return_22d, return_23d, return_24d, return_25d, return_26d, return_27d,
-                              return_28d, return_29d, return_30d, year_return, volume_percent, volume_deviation,
+                new_values = [ticker, curr_date, return_1d, day_returns[-2], day_returns[-3], day_returns[-4],
+                              day_returns[-5], day_returns[-6], day_returns[-7], day_returns[-8], day_returns[-9],
+                              day_returns[-10], day_returns[-11], day_returns[-12], day_returns[-13], day_returns[-14],
+                              day_returns[-15], day_returns[-16], day_returns[-17], day_returns[-18], day_returns[-19],
+                              day_returns[-20], day_returns[-21], day_returns[-22], day_returns[-23], day_returns[-24],
+                              day_returns[-25], day_returns[-26], day_returns[-27], day_returns[-28], day_returns[-29],
+                              day_returns[-30], year_return, volume_percent, volume_deviation,
                               return_60_day, ma_30_day, ma_60_day, macd,
                               curr_year_high_pct, stddev_30, stddev_60, stddev_year]
 
