@@ -62,6 +62,8 @@ def ticker_data():
 
     prices_df = du.get_all_prices()
     fundamental_df = du.get_all_fundamental_data()
+    print(" --- FUNDAMENTAL --- ")
+    fundamental_df.describe()
 
     ticker_set = {t for t in prices_df['ticker']}
     fundamental_ticker_set = {t for t in fundamental_df['ticker']}
@@ -246,6 +248,8 @@ def calc_feature_data():
                 roe = curr_row['roe']
                 eps = curr_row['eps basic'] / curr_close
                 net_margin = curr_row['net margin']
+                bv = curr_row['book value'] * curr_row['shares']
+                z_score = ((1.2*curr_row['cash'] + 1.4*curr_row['earnings'] + 3.3*curr_row['revenue'])/bv)/5.0
                 # for PE Ratio i really should be using the total of the past 4 quarters earnings, but can't get that
                 # reliably, as some rows may have been deleted due to missing data
                 pe_ratio = (curr_close / (float(curr_row['earnings']) / float(curr_row['shares']))) / 150.0
@@ -259,6 +263,7 @@ def calc_feature_data():
                 curr_return_high = curr_close / curr_row['adj. high'] - 1
                 curr_return_low = curr_close / curr_row['adj. low'] - 1
                 day_returns = [curr_close/x - 1 for x in year_df.iloc[-31:-1]['adj. close']]
+                month_returns = [curr_close/x - 1 for x in year_df.iloc[-253:-1:23]['adj. close']]
                 return_4d = curr_close / year_df.iloc[-5]['adj. close'] - 1  # DEBUG: REMOVE THIS LATER
                 if not day_returns[-4] == return_4d:
                     print("RETURN CALC ERROR")
@@ -317,9 +322,11 @@ def calc_feature_data():
                               day_returns[-15], day_returns[-16], day_returns[-17], day_returns[-18], day_returns[-19],
                               day_returns[-20], day_returns[-21], day_returns[-22], day_returns[-23], day_returns[-24],
                               day_returns[-25], day_returns[-26], day_returns[-27], day_returns[-28], day_returns[-29],
-                              day_returns[-30], year_return, volume_percent, volume_deviation,
-                              return_60_day, ma_30_day, ma_60_day, macd,
-                              curr_year_high_pct, stddev_30, stddev_60, stddev_year]
+                              day_returns[-30], month_returns[-2], month_returns[-3], month_returns[-4],
+                              month_returns[-5], month_returns[-6], month_returns[-7], month_returns[-8],
+                              month_returns[-9], month_returns[-10], month_returns[-11], year_return,
+                              volume_percent, volume_deviation, curr_year_high_pct, stddev_30, stddev_60, stddev_year,
+                              net_margin, z_score]
 
                 new_df.loc[i] = new_values
 
@@ -368,9 +375,11 @@ def get_feature_columns():
             'return_7d', 'return_8d', 'return_9d', 'return_10d', 'return_11d', 'return_12d', 'return_13d',
             'return_14d', 'return_15d', 'return_16d', 'return_17d', 'return_18d', 'return_19d', 'return_20d',
             'return_21d', 'return_22d', 'return_23d', 'return_24d', 'return_25d', 'return_26d', 'return_27d',
-            'return_28d', 'return_29d', 'return_30d', 'year_return', 'volume_percent', 'volume_deviation',
-            'return_60_day', 'ma_30_day', 'ma_60_day', 'macd',
-            'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year']
+            'return_28d', 'return_29d', 'return_30d', 'return_2m', 'return_3m', 'return_4m',
+            'return_5m', 'return_6m', 'return_7m', 'return_8m',
+            'return_9m', 'return_10m', 'return_11m', 'year_return',
+            'volume_percent', 'volume_deviation', 'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year',
+            'net_margin', 'z_score']
 
 
 def _get_feature_dataframe_columns():

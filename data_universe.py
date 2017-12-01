@@ -225,6 +225,7 @@ def get_all_fundamental_data():
     ttl_data = ttl_data.rename(columns={'quarter end': 'date'})
     ttl_data = ttl_data.rename(columns={'shares split adjusted': 'shares'})
     ttl_data = ttl_data.rename(columns={'book value of equity per share': 'book value'})
+    ttl_data = ttl_data.rename(columns={'cash at end of period': 'cash'})
 
     ttl_data.sort_values('date', inplace=True)
     ttl_data.reset_index(drop=True, inplace=True)
@@ -262,12 +263,14 @@ def update_fundamental_data(ticker, fundamental_file_list):
                 raise TypeError("got HTML instead of CSV")
             csv_df['ticker'] = pd.Series(_wiki_prefix + ticker, index=csv_df.index)
             csv_df.columns = [x.lower() for x in csv_df.columns]
-            # Clean the crappy data - where there are 'None' Strings, try to stale data
-            csv_df = csv_df.replace('None', np.nan)
-            csv_df = csv_df.fillna(method='backfill')
-            csv_df = csv_df.dropna(axis=0)
-            if csv_df.shape[0] < 2:
-                raise ValueError("Not enough data in CSV to use.")
+            added_df = pd.DataFrame(columns=csv_df.columns)
+            for index, row in csv_df.iterrows():
+                added_df.loc[added_df.shape[0]] = row
+            added_df['quarter end'] = pd.to_datetime(added_df['quarter end'])
+            added_df['quarter end'] = added_df['quarter end'] + datetime.timedelta(days=1)
+            csv_df['quarter end'] = pd.to_datetime(csv_df['quarter end'])
+            csv_df = pd.concat([csv_df, added_df])
+            csv_df = csv_df.sort_values(['quarter end'], ascending=False)
             # remove unnecessary data
             csv_df.drop(['shares', 'split factor', 'assets', 'current assets', 'liabilities', 'current liabilities',
                          'shareholders equity', 'non-controlling interest', 'preferred equity',
@@ -278,6 +281,12 @@ def update_fundamental_data(ticker, fundamental_file_list):
                          'roa', 'p/b ratio', 'p/e ratio', 'cumulative dividends per share', 'dividend payout ratio',
                          'long-term debt to equity ratio', 'equity to assets ratio', 'asset turnover',
                          'free cash flow per share', 'current ratio'], axis=1, inplace=True)
+            # Clean the crappy data - where there are 'None' Strings, try to stale data
+            csv_df = csv_df.replace('None', np.nan)
+            csv_df = csv_df.fillna(method='backfill')
+            csv_df = csv_df.dropna(axis=0)
+            if csv_df.shape[0] < 2:
+                raise ValueError("Not enough data in CSV to use.")
 
             with open(_fundamental_path + ticker_filename, 'wt') as f:
                 f.write(csv_df.to_csv())
