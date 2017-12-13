@@ -80,10 +80,6 @@ class TrainingData:
         curr_row = self.ticker_df_curr_row[self.curr_ticker]
         train_df = ticker_df.iloc[curr_row:curr_row + self.feature_series_count]
 
-        # TODO: Remove this temp code
-        if len(train_df) < 30:
-            print("Should never hit this - {} - {}".format(train_df['date'], train_df['ticker']))
-
         # get data for ml
         feature_matrix = train_df.as_matrix(columns=dml.get_feature_columns())
         feature_shaped = np.reshape(feature_matrix, [self.feature_series_count, self.feature_count])
