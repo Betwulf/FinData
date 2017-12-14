@@ -223,11 +223,13 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         # iterate through sells
         for aticker in new_sell_tickers:
             day_price_item = [item[1] for item in day_prices if item[0] == aticker]
-            if day_price_item is None or len(day_price_item) == 0:
+            quantity, old_price = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]  # should only be one pos
+            if len(day_price_item) == 0:
                 print("WTF, no price? {}".format(aticker))
-            aprice = day_price_item[0]
+                aprice = old_price
+            else:
+                aprice = day_price_item[0]
             prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
-            quantity = [q for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]  # should only be one pos
             total_cost = quantity*aprice - trx_fee
             curr_cash = curr_cash + total_cost
             new_trx = _new_transaction(model_file, aticker, curr_date, aprice, -quantity, trx_fee,
