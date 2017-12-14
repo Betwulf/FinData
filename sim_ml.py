@@ -223,7 +223,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         # iterate through sells
         for aticker in new_sell_tickers:
             day_price_item = [item[1] for item in day_prices if item[0] == aticker]
-            if day_price_item is None:
+            if day_price_item is None or len(day_price_item) == 0:
                 print("WTF, no price? {}".format(aticker))
             aprice = day_price_item[0]
             prediction = [item[1] for item in day_predictions if item[0] == aticker][0]
