@@ -191,8 +191,8 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             new_buy_tickers = list(set(buy_tickers) - set(old_positions.keys()))
             # add to sell tickers those that are too old, and no longer a buy
             aged_tickers = [t for fil, t, dt, pr, q, tv, age in old_positions.values() if age > sell_age]
-            aged_sell_tickers = list(set(aged_tickers) - set(list(zip(*day_prices))[0]))
-            aged_abandoned_tickers = list(set(aged_tickers) - set(aged_sell_tickers))
+            aged_abandoned_tickers = list(set(aged_tickers) - set(list(zip(*day_prices))[0]))
+            aged_sell_tickers = list(set(aged_tickers) - set(aged_sell_tickers))
             sell_tickers = list(set(sell_tickers + aged_sell_tickers))
             new_sell_tickers = set(old_positions.keys()) - (set(old_positions.keys()) - set(sell_tickers))
             abandoned_tickers = set(old_positions.keys()) - set(list(zip(*day_prices))[0]) - {'$'}
