@@ -190,12 +190,17 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             # remove tickers we have already bought
             new_buy_tickers = list(set(buy_tickers) - set(old_positions.keys()))
             # add to sell tickers those that are too old, and no longer a buy
-            sell_tickers = list(set(sell_tickers + [t for fil, t, dt, pr, q, tv, age in
-                                                    old_positions.values() if age > sell_age]))
+            aged_tickers = [t for fil, t, dt, pr, q, tv, age in old_positions.values() if age > sell_age]
+            aged_sell_tickers = list(set(aged_tickers) - set(list(zip(*day_prices))[0]))
+            aged_abandoned_tickers = list(set(aged_tickers) - set(aged_sell_tickers))
+            sell_tickers = list(set(sell_tickers + aged_sell_tickers))
             new_sell_tickers = set(old_positions.keys()) - (set(old_positions.keys()) - set(sell_tickers))
             abandoned_tickers = set(old_positions.keys()) - set(list(zip(*day_prices))[0]) - {'$'}
             rolled_position_tickers = list(set(old_positions.keys()) - set(sell_tickers) -
                                            set(abandoned_tickers) - {'$'})
+            corrected_position_count = len(old_positions) + len(new_buy_tickers) - \
+                                       len(new_sell_tickers) - len(abandoned_tickers)
+            print("old pos count: {} - new pos count: {}".format(new_position_count, corrected_position_count))
             if len(abandoned_tickers) > 0:
                 print("ABANDONED Date: {} Tickers: {}".format(curr_date.strftime('%x'), abandoned_tickers))
         else:
@@ -223,7 +228,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         # iterate through sells
         for aticker in new_sell_tickers:
             day_price_item = [item[1] for item in day_prices if item[0] == aticker]
-            quantity, old_price = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]  # should only be one pos
+            quantity, old_price = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == aticker][0]
             if len(day_price_item) == 0:
                 print("WTF, no price? {}".format(aticker))
                 aprice = old_price
