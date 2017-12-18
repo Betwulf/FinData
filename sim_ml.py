@@ -184,23 +184,19 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         if len(old_positions) > 0:
             current_total_value = sum(list(zip(*old_positions.values()))[5])  # get the total_values
             print("date: {} \t value: {:7.2f}".format(old_date.strftime('%x'), current_total_value))
-            buy_and_old_position_tickers = list(set(buy_tickers + list(old_positions.keys())))
-            new_position_tickers = list(set(buy_and_old_position_tickers) - set(sell_tickers))
-            new_position_count = len(new_position_tickers) - 1
             # remove tickers we have already bought
             new_buy_tickers = list(set(buy_tickers) - set(old_positions.keys()))
             # add to sell tickers those that are too old, and no longer a buy
             aged_tickers = [t for fil, t, dt, pr, q, tv, age in old_positions.values() if age > sell_age]
             aged_abandoned_tickers = list(set(aged_tickers) - set(list(zip(*day_prices))[0]))
-            aged_sell_tickers = list(set(aged_tickers) - set(aged_sell_tickers))
+            aged_sell_tickers = list(set(aged_tickers) - set(aged_abandoned_tickers))
             sell_tickers = list(set(sell_tickers + aged_sell_tickers))
             new_sell_tickers = set(old_positions.keys()) - (set(old_positions.keys()) - set(sell_tickers))
             abandoned_tickers = set(old_positions.keys()) - set(list(zip(*day_prices))[0]) - {'$'}
             rolled_position_tickers = list(set(old_positions.keys()) - set(sell_tickers) -
                                            set(abandoned_tickers) - {'$'})
-            corrected_position_count = len(old_positions) + len(new_buy_tickers) - \
+            new_position_count = len(old_positions) + len(new_buy_tickers) - \
                                        len(new_sell_tickers) - len(abandoned_tickers)
-            print("old pos count: {} - new pos count: {}".format(new_position_count, corrected_position_count))
             if len(abandoned_tickers) > 0:
                 print("ABANDONED Date: {} Tickers: {}".format(curr_date.strftime('%x'), abandoned_tickers))
         else:
