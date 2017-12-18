@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import data_ml as dml
 from utils import timing
+from utils import get_file_friendly_datetime_string
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import datetime
@@ -132,6 +133,14 @@ def _name_model_file_from_path(path, steps):
     return path + 'findata.{}'.format(steps)
 
 
+def _name_test_meta_file_from_path(path):
+    return path + 'findata.test.{}'.format(get_file_friendly_datetime_string())
+
+
+def _name_run_cost_file_from_path(path):
+    return path + 'findata.run_cost.{}'.format(get_file_friendly_datetime_string())
+
+
 @timing
 def restore_rnn(meta_file):
 
@@ -169,7 +178,7 @@ def train_rnn(training_data_cls, train_model_path):
             step = 0
             acc_total = 0.0
             cost_total = 0.0
-            cost_df = pd.DataFrame(columns=('iteration', 'cost', 'accuracy'))
+            cost_df = pd.DataFrame(columns=('time', 'iteration', 'cost', 'accuracy'))
 
             writer.add_graph(session.graph)
 
@@ -202,7 +211,8 @@ def train_rnn(training_data_cls, train_model_path):
                     print_string += " , Average Accuracy= {:3.2f}%".format(100*acc_total/display_step)
                     print(print_string)
 
-                    cost_df.loc[cost_df.shape[0]] = [step+1, cost_total/display_step, 100*acc_total/display_step]
+                    cost_df.loc[cost_df.shape[0]] = [get_file_friendly_datetime_string(), step+1, 
+                                                     cost_total/display_step, 100*acc_total/display_step]
                     acc_total = 0.0
                     cost_total = 0.0
                     ticker = descriptive_df['ticker'].iloc[-1]
@@ -223,10 +233,54 @@ def train_rnn(training_data_cls, train_model_path):
 
             # Save the variables to disk.
             save_path = saver.save(session, _name_model_file_from_path(train_model_path, epochs))
+            # Save the meta data of the run to disk...
+            with open(_name_run_cost_file_from_path(train_model_path), 'wt') as f:
+                f.write(cost_df.to_csv())
+            
             # Can't make cost files in model path anymore, will throw off prediction aggregation
             # cost_df.to_csv(train_model_path + "cost.csv")
             print("Model saved in file: %s" % save_path)
             return save_path
+
+
+def predict_rnn(after_date, specific_files=None):
+    the_curr_time = datetime.datetime.now().strftime('%X')
+    print_string = "Time: {}".format(the_curr_time)
+    print("START PREDICTING MODEL...{}".format(print_string))
+    
+    data_df = dml.get_all_predictable_data()
+    test_df = data_df[data_df.date >= after_date].copy()
+    del data_df
+    predict_data_cls = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
+    
+    predictions_df = pd.DataFrame(columns=('model_file', 'date', 'ticker', 'prediction'))
+
+    file_list = _get_rnn_model_files()
+    if specific_files is None:
+        print("Got these files:")
+        print(file_list)
+    else:
+        file_list = specific_files
+
+    for each_file in file_list:
+        session, x, y, prediction, cost, tf_graph = restore_rnn(each_file)
+        with tf_graph.as_default():
+            feature_data = 'first run'
+            while not feature_data == None:
+                feature_data, label_data, descriptive_df = predict_data_cls.get_next_training_data(until_exhausted=True)
+                if feature_data is None:
+                    print(" --- Data Exhausted --- ")
+                    the_curr_time = datetime.datetime.now().strftime('%X')
+                    print_string = "Time: {}".format(the_curr_time)
+                    print(print_string)
+                    break
+                    
+                prediction_out = session.run([prediction], feed_dict={x: feature_data})
+                ticker = descriptive_df['ticker'].iloc[-1]
+                data_date = descriptive_df['date'].iloc[-1]
+                predictions_df.loc[predictions_df.shape[0]] = [each_file, data_date, ticker, prediction_out[0][0]]
+    with open(prediction_file + "." + get_file_friendly_datetime_string(), 'wt') as f:
+        f.write(predictions_df.to_csv())
 
 
 @timing
@@ -245,6 +299,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     else:
         file_list = specific_files
 
+    test_cost_df = pd.DataFrame(columns=('time', 'file', 'iteration', 'cost', 'accuracy'))
     for each_file in file_list:
         session, x, y, prediction, cost, tf_graph = restore_rnn(each_file)
         with tf_graph.as_default():
@@ -253,6 +308,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
             acc_total = 0.0
             cost_total = 0.0
             buy_accuracy_total = 0.0
+
             # sell_accuracy_total = 0.0
 
             while step < test_epochs:
@@ -269,7 +325,10 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                     print(print_string)
 
                     print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / curr_display_steps))
-                    # print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / curr_display_steps))
+
+                    test_cost_df.loc[test_cost_df.shape[0]] = [get_file_friendly_datetime_string(), each_file,
+                                                               step + 1, cost_total / curr_display_steps,
+                                                               100 * acc_total / curr_display_steps]
                     break
 
                 # Run the Optimizer
@@ -317,6 +376,9 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
             print("Saving Predictions...")
             predictions_df.to_csv(get_prediction_filename(each_file))
             session.close()
+    # Save the meta data of the run to disk...
+    with open(_name_test_meta_file_from_path(_model_path), 'wt') as f:
+        f.write(test_cost_df.to_csv())
     print("ALL TESTS FINISHED.")
 
 
@@ -362,7 +424,6 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
                          buy_threshold, sell_threshold, [saved_model_file])
         except ValueError as ve:
             print(ve)
-
     # GENERATE PREDICTION AGGREGATE FILE
     merge_predictions(prediction_files)
 
@@ -444,11 +505,15 @@ if __name__ == '__main__':
             get_data_and_test_rnn_by_ticker(200000, 200000, 0.6, 0.6, [str(sys.argv[2])])
         elif sys.argv[1] == "test":
             get_data_and_test_rnn(200000, 200000, 0.03, 0.02, [str(sys.argv[2])])
+        elif sys.argv[1] == "predict":
+            predict_rnn(datetime.datetime.today() - datetime.timedelta(days=7), [str(sys.argv[2])])
     elif len(sys.argv) > 1:
         if sys.argv[1] == "testticker":
             get_data_and_test_all_tickers(200000, 200000, 0.6, 0.6)
         elif sys.argv[1] == "test":
             get_data_and_test_rnn(200000, 200000, 0.03, 0.02)
+        elif sys.argv[1] == "predict":
+            predict_rnn(datetime.datetime.today() - datetime.timedelta(days=7))
     else:
         # train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
         get_data_train_and_test_rnn(200000, 200000, 0.03, 0.02)
