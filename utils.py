@@ -1,4 +1,5 @@
 import time
+import datetime
 
 
 def timing(f):
@@ -13,3 +14,7 @@ def timing(f):
             print('%s function took %0.3f s' % (f.__name__, diff_time))
         return ret
     return wrap
+
+
+def get_file_friendly_datetime_string():
+    return datetime.datetime.now().strftime('%Y.%m.%d - %X').replace(':', '.')

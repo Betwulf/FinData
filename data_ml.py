@@ -158,6 +158,14 @@ def get_all_ml_data():
     return df_merged
 
 
+def get_all_predictable_data():
+    df_feature = get_all_feature_data()
+    df_merged = df_feature.assign(future_return_label=list(range(len(df_feature))))
+    df_merged.sort_values('date', inplace=True)
+    df_merged.reset_index(drop=True, inplace=True)
+    df_merged['date'] = pd.to_datetime(df_merged['date'])
+    return df_merged
+
 @timing
 def calc_label_data():
     """ Generates ml label data by calculating future returns off of daily prices """
