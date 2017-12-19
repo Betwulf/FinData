@@ -134,11 +134,11 @@ def _name_model_file_from_path(path, steps):
 
 
 def _name_test_meta_file_from_path(path):
-    return path + 'findata.test.{}'.format(get_file_friendly_datetime_string())
+    return path + 'findata.test.{}.csv'.format(get_file_friendly_datetime_string())
 
 
 def _name_run_cost_file_from_path(path):
-    return path + 'findata.run_cost.{}'.format(get_file_friendly_datetime_string())
+    return path + 'findata.run_cost.{}.csv'.format(get_file_friendly_datetime_string())
 
 
 @timing
@@ -266,7 +266,7 @@ def predict_rnn(after_date, specific_files=None):
         session, x, y, prediction, cost, tf_graph = restore_rnn(each_file)
         with tf_graph.as_default():
             feature_data = 'first run'
-            while not feature_data == None:
+            while feature_data is not None:
                 feature_data, label_data, descriptive_df = predict_data_cls.get_next_training_data(until_exhausted=True)
                 if feature_data is None:
                     print(" --- Data Exhausted --- ")
@@ -275,11 +275,12 @@ def predict_rnn(after_date, specific_files=None):
                     print(print_string)
                     break
                     
-                prediction_out = session.run([prediction], feed_dict={x: feature_data})
+                prediction_out = session.run([prediction], feed_dict={x: feature_data})[0]
                 ticker = descriptive_df['ticker'].iloc[-1]
                 data_date = descriptive_df['date'].iloc[-1]
-                predictions_df.loc[predictions_df.shape[0]] = [each_file, data_date, ticker, prediction_out[0][0]]
-    with open(prediction_file + "." + get_file_friendly_datetime_string(), 'wt') as f:
+                predictions_df.loc[predictions_df.shape[0]] = [each_file, data_date,
+                                                               ticker, prediction_out[0][0]]
+    with open(_prediction_path + get_file_friendly_datetime_string() + "." + _prediction_filename, 'wt') as f:
         f.write(predictions_df.to_csv())
 
 
@@ -506,14 +507,16 @@ if __name__ == '__main__':
         elif sys.argv[1] == "test":
             get_data_and_test_rnn(200000, 200000, 0.03, 0.02, [str(sys.argv[2])])
         elif sys.argv[1] == "predict":
-            predict_rnn(datetime.datetime.today() - datetime.timedelta(days=7), [str(sys.argv[2])])
+            predict_rnn(datetime.datetime.today() - datetime.timedelta(days=27+feature_series_count),
+                        [str(sys.argv[2])])
     elif len(sys.argv) > 1:
         if sys.argv[1] == "testticker":
             get_data_and_test_all_tickers(200000, 200000, 0.6, 0.6)
         elif sys.argv[1] == "test":
             get_data_and_test_rnn(200000, 200000, 0.03, 0.02)
         elif sys.argv[1] == "predict":
-            predict_rnn(datetime.datetime.today() - datetime.timedelta(days=7))
+            predict_rnn(datetime.datetime.today() - datetime.timedelta(days=27+feature_series_count))
     else:
+        # predict_rnn(datetime.datetime.today() - datetime.timedelta(days=27 + feature_series_count))
         # train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
         get_data_train_and_test_rnn(200000, 200000, 0.03, 0.02)
