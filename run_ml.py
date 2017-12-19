@@ -329,7 +329,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
 
                     test_cost_df.loc[test_cost_df.shape[0]] = [get_file_friendly_datetime_string(), each_file,
                                                                step + 1, cost_total / curr_display_steps,
-                                                               100 * acc_total / curr_display_steps]
+                                                               100 * buy_accuracy_total / curr_display_steps]
                     break
 
                 # Run the Optimizer
