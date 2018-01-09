@@ -163,7 +163,7 @@ def restore_rnn(meta_file):
 
 
 @timing
-def train_rnn(training_data_cls, train_model_path):
+def train_rnn(training_data_cls, train_model_path, use_random_data):
     the_curr_time = datetime.datetime.now().strftime('%X')
     print_string = "Time: {}".format(the_curr_time)
     print("Start training model... {}".format(print_string))
@@ -176,15 +176,17 @@ def train_rnn(training_data_cls, train_model_path):
             print("Starting tensorflow...")
             session.run(init)
             step = 0
-            acc_total = 0.0
+            close_enuf_total = 0.0
+            less_close_total = 0.0
             cost_total = 0.0
-            cost_df = pd.DataFrame(columns=('time', 'iteration', 'cost', 'accuracy'))
+            cost_df = pd.DataFrame(columns=('time', 'iteration', 'cost', 'accuracy2p', 'accuracy3p'))
 
             writer.add_graph(session.graph)
 
             while step < epochs:
                 # get data
-                feature_data, label_data, descriptive_df = training_data_cls.get_next_training_data()
+                feature_data, label_data, descriptive_df = \
+                    training_data_cls.get_next_training_data(call_random=use_random_data)
 
                 # Run the Optimizer
                 _, cost_out, prediction_out = session.run([optimizer, cost, prediction],
@@ -202,23 +204,31 @@ def train_rnn(training_data_cls, train_model_path):
 
                 # average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
                 close_enough = (prediction_out[0][0] - 0.02) < label_data[0][0] < (prediction_out[0][0] + 0.02)
-                acc_total += close_enough
+                less_close = (prediction_out[0][0] - 0.03) < label_data[0][0] < (prediction_out[0][0] + 0.03)
+                less_close_total += less_close
+                close_enuf_total += close_enough
                 if (step+1) % display_step == 0:
                     the_curr_time = datetime.datetime.now().strftime('%X')
                     print_string = "Time: {}".format(the_curr_time)
                     print_string += " Iter= " + str(step+1)
-                    print_string += " , Average Loss= {:1.4f}".format(cost_total/display_step)
-                    print_string += " , Average Accuracy= {:3.2f}%".format(100*acc_total/display_step)
+                    print_string += " , Loss= {:1.4f}".format(cost_total/display_step)
+                    print(print_string)
+
+                    print_string = "   2% Accuracy: {:3.2f}%".format(100*close_enuf_total/display_step)
+                    print(print_string)
+                    print_string = "   3% Accuracy: {:3.2f}%".format(100*less_close_total/display_step)
                     print(print_string)
 
                     cost_df.loc[cost_df.shape[0]] = [get_file_friendly_datetime_string(), step+1, 
-                                                     cost_total/display_step, 100*acc_total/display_step]
-                    acc_total = 0.0
+                                                     cost_total/display_step, 100*close_enuf_total/display_step,
+                                                     100 * less_close_total / display_step]
+                    close_enuf_total = 0.0
+                    less_close_total = 0.0
                     cost_total = 0.0
-                    ticker = descriptive_df['ticker'].iloc[-1]
-                    data_date = descriptive_df['date'].iloc[-1]
-                    print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
-                    print("    - Actual: {:1.4f} vs Prediction: {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
+                    # ticker = descriptive_df['ticker'].iloc[-1]
+                    # data_date = descriptive_df['date'].iloc[-1]
+                    # print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
+                    # print("    - Actual: {:1.4f} vs Prediction: {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
                     # print("   Sell - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
                     print("")
                     # print("outputs_out: {}".format(outputs_out))
@@ -300,13 +310,14 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     else:
         file_list = specific_files
 
-    test_cost_df = pd.DataFrame(columns=('time', 'file', 'iteration', 'cost', 'accuracy'))
+    test_cost_df = pd.DataFrame(columns=('time', 'file', 'iteration', 'cost', 'accuracy2p', 'accuracy3p'))
     for each_file in file_list:
         session, x, y, prediction, cost, tf_graph = restore_rnn(each_file)
         with tf_graph.as_default():
             step = 0
             curr_display_steps = 0
-            acc_total = 0.0
+            close_enuf_total = 0.0
+            less_close_total = 0.0
             cost_total = 0.0
             buy_accuracy_total = 0.0
 
@@ -322,14 +333,14 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                     print_string = "Time: {}".format(the_curr_time)
                     print_string += " Iter= " + str(step + 1)
                     print_string += " , Average Loss= {:1.4f}".format(cost_total / curr_display_steps)
-                    print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / curr_display_steps)
                     print(print_string)
-
-                    print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / curr_display_steps))
+                    print("   2% Accuracy: {:3.2f}%".format(100 * close_enuf_total / test_display_step))
+                    print("   3% Accuracy: {:3.2f}%".format(100 * less_close_total / test_display_step))
 
                     test_cost_df.loc[test_cost_df.shape[0]] = [get_file_friendly_datetime_string(), each_file,
                                                                step + 1, cost_total / curr_display_steps,
-                                                               100 * acc_total / curr_display_steps]
+                                                               100 * close_enuf_total / curr_display_steps,
+                                                               100 * less_close_total / curr_display_steps]
                     break
 
                 # Run the Optimizer
@@ -338,12 +349,9 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
 
                 cost_total += cost_out
                 close_enough = (prediction_out[0][0] - 0.02) < label_data[0][0] < (prediction_out[0][0] + 0.02)
-
-                buy_accuracy = abs(((0, 1)[label_data[0][0] > buy_threshold]) -
-                                   ((0, 1)[prediction_out[0][0] > buy_threshold]))
-                buy_accuracy_total += close_enough
-                average_difference = np.mean(np.abs(label_data[0] - prediction_out[0]))
-                acc_total += 1 - min([average_difference, 1])
+                less_close = (prediction_out[0][0] - 0.03) < label_data[0][0] < (prediction_out[0][0] + 0.03)
+                less_close_total += less_close
+                close_enuf_total += close_enough
 
                 # save test predictions
                 ticker = descriptive_df['ticker'].iloc[-1]
@@ -357,19 +365,21 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                     print_string = "Time: {}".format(the_curr_time)
                     print_string += " Iter= " + str(step + 1)
                     print_string += " , Average Loss= {:1.4f}".format(cost_total / test_display_step)
-                    print_string += " , Average Accuracy= {:3.2f}%".format(100 * acc_total / test_display_step)
                     print(print_string)
 
-                    print("   Buy  Accuracy: {:2.3f}%".format(100 * buy_accuracy_total / test_display_step))
-                    # print("   Sell Accuracy: {:2.3f}%".format(100 * sell_accuracy_total / test_display_step))
-                    acc_total = 0.0
+                    print("   2% Accuracy: {:3.2f}%".format(100 * close_enuf_total / test_display_step))
+                    print("   3% Accuracy: {:3.2f}%".format(100 * less_close_total / test_display_step))
+
+                    test_cost_df.loc[test_cost_df.shape[0]] = [get_file_friendly_datetime_string(), each_file,
+                                                               step + 1, cost_total / curr_display_steps,
+                                                               100 * close_enuf_total / curr_display_steps,
+                                                               100 * less_close_total / curr_display_steps]
+                    close_enuf_total = 0.0
+                    less_close_total = 0.0
                     cost_total = 0.0
                     buy_accuracy_total = 0.0
                     # sell_accuracy_total = 0.0
                     curr_display_steps = -1
-                    print("Prediction for: {} - {} (cost: {:1.4f} )".format(ticker, data_date.strftime('%x'), cost_out))
-                    print("   Prediction - Actual: {:1.4f} vs {:1.4f} ".format(label_data[0][0], prediction_out[0][0]))
-                    # print("   Sell - Actual:{:1.4f} vs {:1.4f} ".format(label_data[0][1], prediction_out[0][1]))
                     print("")
                 step += 1
                 curr_display_steps += 1
@@ -383,7 +393,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     print("ALL TESTS FINISHED.")
 
 
-def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold):
+def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold, use_random_data):
     # GET DATA
     data_df = dml.get_all_ml_data()
     tickers = list({t for t in data_df['ticker']})
@@ -416,7 +426,7 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
                         print("couldn't find csv as latest file in {}".format(ticker_path))
             else:
                 os.makedirs(ticker_path)
-                saved_model_file = train_rnn(training_data_class, ticker_path)
+                saved_model_file = train_rnn(training_data_class, ticker_path, use_random_data)
                 saved_model_file = saved_model_file + '.meta'
                 prediction_files.append(saved_model_file + '.csv')
 
@@ -448,7 +458,7 @@ def merge_predictions(prediction_files):
         file_out.close()
 
 
-def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold):
+def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold, use_random_data):
     # GET DATA
     data_df = dml.get_all_ml_data()
     training_df = data_df[data_df.date < test_data_date].copy()
@@ -458,7 +468,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
     # TODO: switch rnn to use batch data, testing below
     # fff, lll, ddd = training_data_class.get_batch(3)
-    train_rnn(training_data_class, _model_path)
+    train_rnn(training_data_class, _model_path, use_random_data)
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
@@ -519,4 +529,4 @@ if __name__ == '__main__':
     else:
         # predict_rnn(datetime.datetime.today() - datetime.timedelta(days=27 + feature_series_count))
         # train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
-        get_data_train_and_test_rnn(200000, 200000, 0.03, 0.02)
+        get_data_train_and_test_rnn(200000, 200000, 0.03, 0.02, use_random_data=False)

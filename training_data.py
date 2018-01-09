@@ -14,6 +14,7 @@ class TrainingData:
         self.data_df = data_df
         self.tickers = list({t for t in data_df['ticker']})
         self.tickers.sort()
+        self.valid_tickers = []
         self.ticker_count = len(self.tickers)
         self.curr_ticker = 0
 
@@ -27,17 +28,19 @@ class TrainingData:
                 self.ticker_count = self.ticker_count - 1
             else:
                 self.tickers_df_list.append(ticker_df)
+                self.valid_tickers.append(self.tickers[ticker_num])
 
         self.ticker_df_curr_row = np.zeros(self.ticker_count, dtype=np.int)
 
-    def get_next_training_data_random(self, until_exhausted):
+    def get_next_training_data_random(self, until_exhausted=False):
         # Get random ticker
-        tickers = list({t for t in self.data_df['ticker']})
-        rnd_ticker_num = np.random.randint(0, len(tickers))
-        ticker_df = self.data_df[self.data_df.ticker == tickers[rnd_ticker_num]]
+        rnd_ticker_num = np.random.randint(0, len(self.valid_tickers))
+        ticker_df = self.data_df[self.data_df.ticker == self.valid_tickers[rnd_ticker_num]]
 
         # get random series for this ticker
         series_count = len(ticker_df) - self.feature_series_count
+        if (series_count < 1):
+            print("WTF {}".format(self.valid_tickers[rnd_ticker_num]))
         rnd_series_num = np.random.randint(0, series_count)
         train_df = ticker_df.iloc[rnd_series_num:rnd_series_num + self.feature_series_count]
 
@@ -62,7 +65,9 @@ class TrainingData:
 
         return batch_feature_shaped, batch_label_array, batch_descriptive
 
-    def get_next_training_data(self, until_exhausted=False):
+    def get_next_training_data(self, call_random=False, until_exhausted=False):
+        if call_random:
+            return self.get_next_training_data_random()
         # if we have used up all data possible, then reset and reuse training data
         if self.ticker_df_curr_row.sum() == -self.ticker_count:
             print("Used up all the training labels...")
