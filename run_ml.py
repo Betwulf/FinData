@@ -300,9 +300,6 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
     print_string = "Time: {}".format(the_curr_time)
     print("START TESTING MODEL...{}".format(print_string))
 
-    predictions_df = pd.DataFrame(columns=('model_file', 'date', 'ticker',
-                                           'prediction', 'label'))
-
     file_list = _get_rnn_model_files()
     if specific_files is None:
         print("Got these files:")
@@ -312,12 +309,15 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
 
     test_cost_df = pd.DataFrame(columns=('time', 'file', 'iteration', 'cost', 'accuracy2p', 'accuracy3p'))
     for each_file in file_list:
+        predictions_df = pd.DataFrame(columns=('model_file', 'date', 'ticker',
+                                               'prediction', 'label'))
         session, x, y, prediction, cost, tf_graph = restore_rnn(each_file)
         with tf_graph.as_default():
             step = 0
             curr_display_steps = 0
             close_enuf_total = 0.0
             less_close_total = 0.0
+            close_positive_total = 0.0
             cost_total = 0.0
             buy_accuracy_total = 0.0
 
@@ -336,6 +336,7 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                     print(print_string)
                     print("   2% Accuracy: {:3.2f}%".format(100 * close_enuf_total / test_display_step))
                     print("   3% Accuracy: {:3.2f}%".format(100 * less_close_total / test_display_step))
+                    print("   2% Pos Accu: {:3.2f}%".format(100 * close_positive_total / test_display_step))
 
                     test_cost_df.loc[test_cost_df.shape[0]] = [get_file_friendly_datetime_string(), each_file,
                                                                step + 1, cost_total / curr_display_steps,
@@ -350,8 +351,10 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                 cost_total += cost_out
                 close_enough = (prediction_out[0][0] - 0.02) < label_data[0][0] < (prediction_out[0][0] + 0.02)
                 less_close = (prediction_out[0][0] - 0.03) < label_data[0][0] < (prediction_out[0][0] + 0.03)
+                close_positive = (close_enough or (prediction_out[0][0] - 0.52)*(label_data[0][0] - 0.50)) > 0
                 less_close_total += less_close
                 close_enuf_total += close_enough
+                close_positive_total += close_positive
 
                 # save test predictions
                 ticker = descriptive_df['ticker'].iloc[-1]
@@ -369,13 +372,15 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
 
                     print("   2% Accuracy: {:3.2f}%".format(100 * close_enuf_total / test_display_step))
                     print("   3% Accuracy: {:3.2f}%".format(100 * less_close_total / test_display_step))
+                    print("   2% Pos Accu: {:3.2f}%".format(100 * close_positive_total / test_display_step))
 
                     test_cost_df.loc[test_cost_df.shape[0]] = [get_file_friendly_datetime_string(), each_file,
-                                                               step + 1, cost_total / curr_display_steps,
-                                                               100 * close_enuf_total / curr_display_steps,
-                                                               100 * less_close_total / curr_display_steps]
+                                                               step + 1, cost_total / test_display_step,
+                                                               100 * close_enuf_total / test_display_step,
+                                                               100 * less_close_total / test_display_step]
                     close_enuf_total = 0.0
                     less_close_total = 0.0
+                    close_positive_total = 0.0
                     cost_total = 0.0
                     buy_accuracy_total = 0.0
                     # sell_accuracy_total = 0.0
@@ -386,6 +391,8 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
             print("{} Testing Finished!".format(each_file))
             print("Saving Predictions...")
             predictions_df.to_csv(get_prediction_filename(each_file))
+            predictions_df.drop(predictions_df.index, inplace=True, axis=0)
+            del predictions_df
             session.close()
     # Save the meta data of the run to disk...
     with open(_name_test_meta_file_from_path(_model_path), 'wt') as f:
@@ -527,6 +534,7 @@ if __name__ == '__main__':
         elif sys.argv[1] == "predict":
             predict_rnn(datetime.datetime.today() - datetime.timedelta(days=27+feature_series_count))
     else:
+        # get_data_and_test_rnn(20000, 2000, 0.03, 0.02)
         # predict_rnn(datetime.datetime.today() - datetime.timedelta(days=27 + feature_series_count))
         # train_and_test_by_ticker(4000, 4000, 0.6, 0.6)
         get_data_train_and_test_rnn(200000, 200000, 0.03, 0.02, use_random_data=False)
