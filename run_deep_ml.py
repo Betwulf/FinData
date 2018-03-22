@@ -21,7 +21,7 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 nn_learning_rate = 0.001
-epochs = 100000  # 1600000
+epochs = 2000000  # 1600000
 display_step = 10000  # 10000
 save_step = 100000  # 100000
 test_data_date = datetime.datetime(2016, 6, 30)
