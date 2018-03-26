@@ -20,11 +20,11 @@ feature_series_count = 1
 label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
-nn_learning_rate = 0.001
+nn_learning_rate = 0.0001
 epochs = 2000000  # 1600000
-display_step = 10000  # 10000
+display_step = 20000  # 10000
 save_step = 100000  # 100000
-test_data_date = datetime.datetime(2016, 6, 30)
+test_data_date = datetime.datetime(2016, 9, 30)
 
 # Parameters for LSTM Shape
 layers_count = 10
@@ -300,9 +300,10 @@ def test_rnn(testing_data_cls, test_epochs, test_display_step, buy_threshold, se
                     print_string += " Iter= " + str(step + 1)
                     print_string += " , Average Loss= {:1.4f}".format(cost_total / curr_display_steps)
                     print(print_string)
-                    print("   2% Accuracy: {:3.2f}%".format(100 * close_enuf_total / test_display_step))
-                    print("   3% Accuracy: {:3.2f}%".format(100 * less_close_total / test_display_step))
-                    print("   2% Pos Accu: {:3.2f}%".format(100 * close_positive_total / test_display_step))
+                    print("   test step: {} - curr step: {}".format(test_display_step, curr_display_steps))
+                    print("       2% Accuracy: {:3.2f}%".format(100 * close_enuf_total / test_display_step))
+                    print("       3% Accuracy: {:3.2f}%".format(100 * less_close_total / test_display_step))
+                    print("       2% Pos Accu: {:3.2f}%".format(100 * close_positive_total / test_display_step))
 
                     test_cost_df.loc[test_cost_df.shape[0]] = [get_file_friendly_datetime_string(), each_file,
                                                                step + 1, cost_total / curr_display_steps,
