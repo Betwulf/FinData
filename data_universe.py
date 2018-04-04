@@ -11,13 +11,16 @@ from utils import timing
 
 _data_dir = "/data/"
 _price_dir = "/data/prices/"
+_sectors_dir = "/data/sectors/"
 _fundamental_dir = "/data/fundamental/"
 _combined_filename = "__all.csv"
-_wiki_prefix = 'WIKI/'
+wiki_prefix = 'WIKI/'
+iex_base_url = "https://api.iextrading.com/1.0/"
 
 _cwd = os.getcwd()
 _data_path = _cwd + _data_dir
 _price_path = _cwd + _price_dir
+_sector_path = _cwd + _sectors_dir
 _fundamental_path = _cwd + _fundamental_dir
 
 # ensure paths are there...
@@ -25,6 +28,8 @@ if not os.path.exists(_data_path):
     os.makedirs(_data_path)
 if not os.path.exists(_price_path):
     os.makedirs(_price_path)
+if not os.path.exists(_sector_path):
+    os.makedirs(_sector_path)
 if not os.path.exists(_fundamental_path):
     os.makedirs(_fundamental_path)
 
@@ -35,7 +40,7 @@ def create_universe_from_json():
 
     with open('S&P500.json', 'rb') as f:
         json = pd.read_json(f)
-        snp_list = [_wiki_prefix + x['ticker'] for x in json['constituents']]
+        snp_list = [wiki_prefix + x['ticker'] for x in json['constituents']]
 
     snp_list.sort()
     with open(_data_path + 'universe.txt', 'wt', encoding='utf-8') as f:
@@ -45,10 +50,38 @@ def create_universe_from_json():
 
 def update_all_price_caches():
     """ Go through each ticker in the universe and either get beginning data or update latest data """
-
     snp_list = _get_tickerlist()
     for ticker in snp_list:
         update_price_cache(ticker)
+
+
+def update_all_sector_caches():
+    """ Go through each ticker in the universe and either get beginning data or update latest data """
+    print("Getting Sectors from IEX...")
+    snp_list = _get_tickerlist(remove_wiki=True)
+    sectors_df = pd.DataFrame(columns=['ticker', 'sector', 'industry'])
+    for ticker in snp_list:
+        try:
+            iex_data = requests.get(iex_base_url+"stock/"+ticker+"/company", "").text
+            iex_company = pd.read_json(iex_data, typ='series')
+            sector_row = [ticker, iex_company['sector'], iex_company['industry']]
+            sectors_df.loc[sectors_df.shape[0]] = sector_row
+            print(sector_row)
+        except:
+            print("Failed for ticker: {}".format(ticker))
+
+    with open(_sector_path + _combined_filename, 'wt') as f:
+        f.write(sectors_df.to_csv())
+    print("COMPLETE - Getting Sectors from IEX")
+
+
+def get_sectors():
+    try:
+        with open(_sector_path + _combined_filename, 'rt', encoding='utf-8') as f:
+            sector_df = pd.read_csv(f, index_col=0)
+    except:
+        sector_df = pd.DataFrame(columns=['ticker', 'sector', 'industry'])
+    return sector_df
 
 
 def _get_tickerlist(remove_wiki=False, num_tickers=510):
@@ -57,7 +90,7 @@ def _get_tickerlist(remove_wiki=False, num_tickers=510):
         snp_list = [x.strip('\n') for x in f]
     print("Got tickers... Top {}: ".format(num_tickers))
     if remove_wiki:
-        snp_list = [x[len(_wiki_prefix):] for x in snp_list]
+        snp_list = [x[len(wiki_prefix):] for x in snp_list]
     print(snp_list[:num_tickers])
     return snp_list[:num_tickers]
 
@@ -261,7 +294,7 @@ def update_fundamental_data(ticker, fundamental_file_list):
             csv_df = pd.read_csv(io.StringIO(s.decode('utf-8')), error_bad_lines=False)
             if (len(csv_df.columns)) == 1:
                 raise TypeError("got HTML instead of CSV")
-            csv_df['ticker'] = pd.Series(_wiki_prefix + ticker, index=csv_df.index)
+            csv_df['ticker'] = pd.Series(wiki_prefix + ticker, index=csv_df.index)
             csv_df.columns = [x.lower() for x in csv_df.columns]
             added_df = pd.DataFrame(columns=csv_df.columns)
             for index, row in csv_df.iterrows():
@@ -296,6 +329,7 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
+    update_all_sector_caches()
     update_all_fundamental_data()
     get_all_fundamental_data()
     # create_universe_from_json()

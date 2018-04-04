@@ -212,145 +212,162 @@ def calc_label_data():
                 f.write(new_df.to_csv())
 
 
+def get_sector_features(sectors_df):
+    sector_list = sectors_df.sector.unique().tolist()
+    sector_list.remove('Failed')
+    del sector_list[-1]
+    sector_list.sort()
+    sector_dict = {k: i for i, k in enumerate(sector_list)}
+    return sector_list, sector_dict
+
+
 @timing
 def calc_feature_data():
     """ Generates ml data by calculating specific values off of daily prices """
-    print("Calc feature data")
+    print("Starting Calc feature data...")
+    sectors_df = du.get_sectors()
+    sector_list, sector_dict = get_sector_features(sectors_df)
     # for each ticker, sort and process calculated data for ml
     for ticker, sub_df, percent_done in ticker_data():
+        try:
+            # add EMA to the ticker data
+            sectors_features = np.zeros(len(sector_list))
+            ticker_sector_str = sectors_df[sectors_df.ticker == ticker.replace(du.wiki_prefix, '')].sector.tolist()[0]
+            sectors_features[sector_dict[ticker_sector_str]] = 1
 
-        # add EMA to the ticker data
-        ema_12_column_name = "ema_12"
-        ema_26_column_name = "ema_26"
-        ema_12 = pd.ewma(sub_df['adj. close'], span=12)
-        ema_26 = pd.ewma(sub_df['adj. close'], span=26)
-        sub_df[ema_12_column_name] = ema_12
-        sub_df[ema_26_column_name] = ema_26
+            ema_12_column_name = "ema_12"
+            ema_26_column_name = "ema_26"
+            ema_12 = pd.ewma(sub_df['adj. close'], span=12)
+            ema_26 = pd.ewma(sub_df['adj. close'], span=26)
+            sub_df[ema_12_column_name] = ema_12
+            sub_df[ema_26_column_name] = ema_26
 
-        # Let people know how long this might take...
-        if int(percent_done*100) % 5 == 0:
-            print("   --- {0:0.0f}% DONE ---".format(percent_done * 100))
+            # Let people know how long this might take...
+            if int(percent_done*100) % 5 == 0:
+                print("   --- {0:0.0f}% DONE ---".format(percent_done * 100))
 
-        # check if we have enough history to calc year high / low
-        if len(sub_df) <= _business_days_in_a_year:
-            print('ticker {} does not have enough data to calc year high'.format(ticker))
-        else:
-            # count the amount of year ranges available in the dataframe - eq. len(df) 253 means 2 ranges of 252
-            new_size = len(sub_df) - _business_days_in_a_year + 1
-            new_df = _create_feature_data_frame(new_size)
-            for i in range(new_size):
-                start_loc = i
-                end_loc = _business_days_in_a_year + i
-                year_df = sub_df.iloc[start_loc:end_loc]
+            # check if we have enough history to calc year high / low
+            if len(sub_df) <= _business_days_in_a_year:
+                print('ticker {} does not have enough data to calc year high'.format(ticker))
+            else:
+                # count the amount of year ranges available in the dataframe - eq. len(df) 253 means 2 ranges of 252
+                new_size = len(sub_df) - _business_days_in_a_year + 1
+                new_df = _create_feature_data_frame(new_size)
+                for i in range(new_size):
+                    start_loc = i
+                    end_loc = _business_days_in_a_year + i
+                    year_df = sub_df.iloc[start_loc:end_loc]
 
-                year_adj_close = np.asarray(year_df['adj. close'][-_business_days_in_a_year:])
-                year_low = min(year_adj_close)
-                year_high = max(year_adj_close)
-                curr_row = year_df.iloc[-1]
-                prev_row = year_df.iloc[-2]
-                two_days_ago_row = year_df.iloc[-3]
-                curr_date = curr_row['date']
-                curr_close = curr_row['adj. close']
+                    year_adj_close = np.asarray(year_df['adj. close'][-_business_days_in_a_year:])
+                    year_low = min(year_adj_close)
+                    year_high = max(year_adj_close)
+                    curr_row = year_df.iloc[-1]
+                    prev_row = year_df.iloc[-2]
+                    two_days_ago_row = year_df.iloc[-3]
+                    curr_date = curr_row['date']
+                    curr_close = curr_row['adj. close']
 
-                # Fundamental Measures here - remember to unitize
-                roe = curr_row['roe']
-                eps = curr_row['eps basic'] / curr_close
-                net_margin = curr_row['net margin']
-                bv = curr_row['book value'] * curr_row['shares']
-                z_score = ((1.2*curr_row['cash'] + 1.4*curr_row['earnings'] + 3.3*curr_row['revenue'])/bv)/5.0
-                # for PE Ratio i really should be using the total of the past 4 quarters earnings, but can't get that
-                # reliably, as some rows may have been deleted due to missing data
-                pe_ratio = (curr_close / (float(curr_row['earnings']) / float(curr_row['shares']))) / 150.0
-                # for  PB ratio, the value can get really big, like over 30, so divide by 20 to capture val
-                pb_ratio = (curr_close / curr_row['book value']) / 20.0
-                rpsop = (curr_row['revenue'] / curr_row['shares']) / curr_close
+                    # Fundamental Measures here - remember to unitize
+                    roe = curr_row['roe']
+                    eps = curr_row['eps basic'] / curr_close
+                    net_margin = curr_row['net margin']
+                    bv = curr_row['book value'] * curr_row['shares']
+                    z_score = ((1.2*curr_row['cash'] + 1.4*curr_row['earnings'] + 3.3*curr_row['revenue'])/bv)/5.0
+                    # for PE Ratio i really should be using the total of the past 4 quarters earnings, but can't get that
+                    # reliably, as some rows may have been deleted due to missing data
+                    pe_ratio = (curr_close / (float(curr_row['earnings']) / float(curr_row['shares']))) / 150.0
+                    # for  PB ratio, the value can get really big, like over 30, so divide by 20 to capture val
+                    pb_ratio = (curr_close / curr_row['book value']) / 20.0
+                    rpsop = (curr_row['revenue'] / curr_row['shares']) / curr_close
 
-                return_1d = curr_close / prev_row['adj. close'] - 1
-                year_return = curr_close / year_df.iloc[0]['adj. close'] - 1
-                curr_return_open = curr_close / curr_row['adj. open'] - 1
-                curr_return_high = curr_close / curr_row['adj. high'] - 1
-                curr_return_low = curr_close / curr_row['adj. low'] - 1
-                day_returns = [curr_close/x - 1 for x in year_df.iloc[-31:-1]['adj. close']]
-                month_returns = [curr_close/x - 1 for x in year_df.iloc[-253:-1:23]['adj. close']]
-                return_4d = curr_close / year_df.iloc[-5]['adj. close'] - 1  # DEBUG: REMOVE THIS LATER
-                if not day_returns[-4] == return_4d:
-                    print("RETURN CALC ERROR")
-                    raise ValueError("RETURN CALC ERROR")
-                curr_year_high_pct = (curr_close - year_low) / (year_high - year_low)
-                curr_year_low_pct = (year_high - curr_close) / (year_high - year_low)
+                    return_1d = curr_close / prev_row['adj. close'] - 1
+                    year_return = curr_close / year_df.iloc[0]['adj. close'] - 1
+                    curr_return_open = curr_close / curr_row['adj. open'] - 1
+                    curr_return_high = curr_close / curr_row['adj. high'] - 1
+                    curr_return_low = curr_close / curr_row['adj. low'] - 1
+                    day_returns = [curr_close/x - 1 for x in year_df.iloc[-31:-1]['adj. close']]
+                    month_returns = [curr_close/x - 1 for x in year_df.iloc[-253:-1:23]['adj. close']]
+                    return_4d = curr_close / year_df.iloc[-5]['adj. close'] - 1  # DEBUG: REMOVE THIS LATER
+                    if not day_returns[-4] == return_4d:
+                        print("RETURN CALC ERROR")
+                        raise ValueError("RETURN CALC ERROR")
+                    curr_year_high_pct = (curr_close - year_low) / (year_high - year_low)
+                    curr_year_low_pct = (year_high - curr_close) / (year_high - year_low)
 
-                # now calc the multi day stats
-                prev_row = year_df.iloc[-10]  # prev 9 day
-                return_9_day = curr_close / prev_row['adj. close'] - 1
-                ma_9_day = np.asarray(year_df['adj. close'][-10:]).mean() / curr_close - 1
-                past_volumes = np.asarray(year_df['adj. volume'][-10:])
-                volume_high = past_volumes.max()
-                volume_low = past_volumes.min()
-                volume_percent = (curr_row['adj. volume'] - volume_low) / (volume_high - volume_low)
-                volume_average = year_df['adj. volume'].values.mean()
-                volume_stddev = year_df['adj. volume'].values.std(ddof=1)
-                # want to capture up to 3 std deviations off of the average
-                volume_deviation = ((curr_row['adj. volume'] - volume_average) / volume_stddev)/3
+                    # now calc the multi day stats
+                    prev_row = year_df.iloc[-10]  # prev 9 day
+                    return_9_day = curr_close / prev_row['adj. close'] - 1
+                    ma_9_day = np.asarray(year_df['adj. close'][-10:]).mean() / curr_close - 1
+                    past_volumes = np.asarray(year_df['adj. volume'][-10:])
+                    volume_high = past_volumes.max()
+                    volume_low = past_volumes.min()
+                    volume_percent = (curr_row['adj. volume'] - volume_low) / (volume_high - volume_low)
+                    volume_average = year_df['adj. volume'].values.mean()
+                    volume_stddev = year_df['adj. volume'].values.std(ddof=1)
+                    # want to capture up to 3 std deviations off of the average
+                    volume_deviation = ((curr_row['adj. volume'] - volume_average) / volume_stddev)/3
 
-                prev_row = year_df.iloc[-16]
-                return_15_day = curr_close / prev_row['adj. close'] - 1
-                ma_15_day = np.asarray(year_df['adj. close'][-16:]).mean() / curr_close - 1
+                    prev_row = year_df.iloc[-16]
+                    return_15_day = curr_close / prev_row['adj. close'] - 1
+                    ma_15_day = np.asarray(year_df['adj. close'][-16:]).mean() / curr_close - 1
 
-                prev_row = year_df.iloc[-31]
-                return_30_day = curr_close / prev_row['adj. close'] - 1
-                array_30 = np.asarray(year_df['adj. close'][-31:])
-                ma_30_day = array_30.mean() / curr_close - 1
-                stddev_30 = array_30.std(ddof=1) / curr_close
+                    prev_row = year_df.iloc[-31]
+                    return_30_day = curr_close / prev_row['adj. close'] - 1
+                    array_30 = np.asarray(year_df['adj. close'][-31:])
+                    ma_30_day = array_30.mean() / curr_close - 1
+                    stddev_30 = array_30.std(ddof=1) / curr_close
 
-                prev_row = year_df.iloc[-61]
-                return_60_day = curr_close / prev_row['adj. close'] - 1
-                array_60 = np.asarray(year_df['adj. close'][-61:])
-                ma_60_day = array_60.mean() / curr_close - 1
-                stddev_60 = array_60.std(ddof=1) / curr_close
+                    prev_row = year_df.iloc[-61]
+                    return_60_day = curr_close / prev_row['adj. close'] - 1
+                    array_60 = np.asarray(year_df['adj. close'][-61:])
+                    ma_60_day = array_60.mean() / curr_close - 1
+                    stddev_60 = array_60.std(ddof=1) / curr_close
 
-                stddev_year = np.asarray(year_df['adj. close']).std(ddof=1) / curr_close
-                macd_12 = np.asarray(year_df[ema_12_column_name][-9:])
-                macd_26 = np.asarray(year_df[ema_26_column_name][-9:])
-                macd_diff = macd_12 - macd_26
-                macd = (macd_diff[-1] - macd_diff.mean()) / curr_close
+                    stddev_year = np.asarray(year_df['adj. close']).std(ddof=1) / curr_close
+                    macd_12 = np.asarray(year_df[ema_12_column_name][-9:])
+                    macd_26 = np.asarray(year_df[ema_26_column_name][-9:])
+                    macd_diff = macd_12 - macd_26
+                    macd = (macd_diff[-1] - macd_diff.mean()) / curr_close
 
-                # print out end of series data for debugging
-                if i > (new_size-3):
-                    print('date: {} adj close: {:4.3f} - year high: {:3.2f} '
-                          'macd: {:1.3f}'.format(curr_date,
-                                                 curr_close, curr_year_high_pct, macd))
-                    print('   volume %: {:1.3f} volume stddev: {:1.3f} '.format(volume_percent, volume_deviation))
-                    print('   9 day rtn: {:1.3f} stddev 60: {:1.3f} '
-                          'stddev yr: {:1.3f} MA 60 day: {:1.3f}'.format(return_9_day, stddev_60,
-                                                                         stddev_year, ma_60_day))
+                    # print out end of series data for debugging
+                    if i > (new_size-3):
+                        print('date: {} adj close: {:4.3f} - year high: {:3.2f} '
+                              'macd: {:1.3f}'.format(curr_date,
+                                                     curr_close, curr_year_high_pct, macd))
+                        print('   volume %: {:1.3f} volume stddev: {:1.3f} '.format(volume_percent, volume_deviation))
+                        print('   9 day rtn: {:1.3f} stddev 60: {:1.3f} '
+                              'stddev yr: {:1.3f} MA 60 day: {:1.3f}'.format(return_9_day, stddev_60,
+                                                                             stddev_year, ma_60_day))
 
-                new_values = [ticker, curr_date, return_1d, day_returns[-2], day_returns[-3], day_returns[-4],
-                              day_returns[-5], day_returns[-6], day_returns[-7], day_returns[-8], day_returns[-9],
-                              day_returns[-10], day_returns[-11], day_returns[-12], day_returns[-13], day_returns[-14],
-                              day_returns[-15], day_returns[-16], day_returns[-17], day_returns[-18], day_returns[-19],
-                              day_returns[-20], day_returns[-21], day_returns[-22], day_returns[-23], day_returns[-24],
-                              day_returns[-25], day_returns[-26], day_returns[-27], day_returns[-28], day_returns[-29],
-                              day_returns[-30], month_returns[-2], month_returns[-3], month_returns[-4],
-                              month_returns[-5], month_returns[-6], month_returns[-7], month_returns[-8],
-                              month_returns[-9], month_returns[-10], month_returns[-11], year_return,
-                              volume_percent, volume_deviation, curr_year_high_pct, stddev_30, stddev_60, stddev_year,
-                              net_margin, z_score]
+                    new_values = [ticker, curr_date, return_1d, day_returns[-2], day_returns[-3], day_returns[-4],
+                                  day_returns[-5], day_returns[-6], day_returns[-7], day_returns[-8], day_returns[-9],
+                                  day_returns[-10], day_returns[-11], day_returns[-12], day_returns[-13], day_returns[-14],
+                                  day_returns[-15], day_returns[-16], day_returns[-17], day_returns[-18], day_returns[-19],
+                                  day_returns[-20], day_returns[-21], day_returns[-22], day_returns[-23], day_returns[-24],
+                                  day_returns[-25], day_returns[-26], day_returns[-27], day_returns[-28], day_returns[-29],
+                                  day_returns[-30], month_returns[-2], month_returns[-3], month_returns[-4],
+                                  month_returns[-5], month_returns[-6], month_returns[-7], month_returns[-8],
+                                  month_returns[-9], month_returns[-10], month_returns[-11], year_return,
+                                  volume_percent, volume_deviation, curr_year_high_pct, stddev_30, stddev_60, stddev_year,
+                                  net_margin, z_score, *sectors_features]
 
-                new_df.loc[i] = new_values
+                    new_df.loc[i] = new_values
 
-            # Now normalize-ish the data by clipping it to acceptable ranges for ML
-            for col in get_feature_columns():
-                new_df[col] = np.clip(new_df[col], -1., 1.)
+                # Now normalize-ish the data by clipping it to acceptable ranges for ML
+                for col in get_feature_columns():
+                    new_df[col] = np.clip(new_df[col], -1., 1.)
 
-            # drop any rows with nan
-            old_row_count = new_df.shape
-            new_df.dropna(how='any')
-            new_row_count = new_df.shape
-            if new_row_count < old_row_count:
-                print("Features removed - from {} to {}".format(old_row_count, new_row_count))
+                # drop any rows with nan
+                old_row_count = new_df.shape
+                new_df.dropna(how='any')
+                new_row_count = new_df.shape
+                if new_row_count < old_row_count:
+                    print("Features removed - from {} to {}".format(old_row_count, new_row_count))
 
-            with open(_feature_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
-                f.write(new_df.to_csv())
+                with open(_feature_path + _get_calc_filename(ticker), 'wt', encoding='utf-8') as f:
+                    f.write(new_df.to_csv())
+        except Exception as ex:
+            print("error with {} - {}".format(ticker, ex))
 
 
 def _get_calc_filename(ticker, extension=".csv"):
@@ -379,6 +396,8 @@ def get_label_columns():
 
 
 def get_feature_columns():
+    sectors_df = du.get_sectors()
+    sector_list, sector_dict = get_sector_features(sectors_df)
     return ['return_1d', 'return_2d', 'return_3d', 'return_4d', 'return_5d', 'return_6d',
             'return_7d', 'return_8d', 'return_9d', 'return_10d', 'return_11d', 'return_12d', 'return_13d',
             'return_14d', 'return_15d', 'return_16d', 'return_17d', 'return_18d', 'return_19d', 'return_20d',
@@ -387,7 +406,7 @@ def get_feature_columns():
             'return_5m', 'return_6m', 'return_7m', 'return_8m',
             'return_9m', 'return_10m', 'return_11m', 'year_return',
             'volume_percent', 'volume_deviation', 'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year',
-            'net_margin', 'z_score']
+            'net_margin', 'z_score', *sector_list]
 
 
 def _get_feature_dataframe_columns():
