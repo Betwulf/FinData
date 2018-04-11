@@ -28,7 +28,7 @@ test_data_date = datetime.datetime(2016, 9, 30)
 
 # Parameters for LSTM Shape
 layers_count = 10
-hidden_neurons = 1024
+hidden_neurons = 2048
 
 # File parameters
 _prediction_dir = "/prediction/"
