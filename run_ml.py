@@ -24,7 +24,7 @@ learning_rate = 0.001
 epochs = 2000000  # 1600000
 display_step = 10000  # 10000
 save_step = 100000  # 100000
-test_data_date = datetime.datetime(2016, 6, 30)
+test_data_date = datetime.datetime(2016, 12, 31)
 
 # Parameters for LSTM Shape
 feature_series_count = 20  # The number of inputs back-to-back to feed into the RNN, aka Batch size, sequence length

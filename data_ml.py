@@ -13,7 +13,7 @@ _cwd = os.getcwd()
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 10  # numbers of days in the future to train on
+_forecast_days = 31  # numbers of days in the future to train on
 _forecast_buy_threshold = 2  # train for positive results above this percent return
 _forecast_sell_threshold = -2  # train for positive results below this percent return
 _forecast_slope = 0.2  # the steep climb from 0 to 1 as x approaches the threshold precentage
@@ -214,7 +214,10 @@ def calc_label_data():
 
 def get_sector_features(sectors_df):
     sector_list = sectors_df.sector.unique().tolist()
-    sector_list.remove('Failed')
+    try:
+        sector_list.remove('Failed')
+    except:
+        pass
     del sector_list[-1]
     sector_list.sort()
     sector_dict = {k: i for i, k in enumerate(sector_list)}

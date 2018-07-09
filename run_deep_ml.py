@@ -24,7 +24,7 @@ nn_learning_rate = 0.0001
 epochs = 2000000  # 1600000
 display_step = 20000  # 10000
 save_step = 100000  # 100000
-test_data_date = datetime.datetime(2016, 9, 30)
+test_data_date = datetime.datetime(2016, 12, 31)
 
 # Parameters for LSTM Shape
 layers_count = 10
