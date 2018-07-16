@@ -34,7 +34,7 @@ hidden_neurons = 2048
 _prediction_dir = "/prediction/"
 _model_dir = "/model/"
 _prediction_filename = "predictions.csv"
-_cwd = os.getcwd()
+_cwd = "C:/Temp/"
 _model_path = _cwd + _model_dir
 _prediction_path = _cwd + _prediction_dir
 prediction_file = _prediction_path + _prediction_filename
@@ -439,10 +439,10 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     test_df = data_df[data_df.date >= test_data_date].copy()
     del data_df
     # TRAIN
-    training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    ## training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
     # TODO: switch rnn to use batch data, testing below
     # fff, lll, ddd = training_data_class.get_batch(3)
-    train_rnn(training_data_class, _model_path, use_random_data)
+    ## train_rnn(training_data_class, _model_path, use_random_data)
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
