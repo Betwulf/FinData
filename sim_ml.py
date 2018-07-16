@@ -163,6 +163,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
     curr_cash = start_cash
     prices, predictions = build_dictionaries(prediction_price_df)
     old_date = None
+    month_traded = False
 
     # main loop - daily
     for curr_date in sorted(predictions):
