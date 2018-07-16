@@ -14,7 +14,7 @@ _positions_filename = "positions.csv"
 _transactions_filename = "transactions.csv"
 _returns_filename = "returns.csv"
 _test_data_filename = "test_sim_data.csv"
-_cwd = os.getcwd()
+_cwd = "C:/Temp/"
 _sim_path = _cwd + _sim_dir
 _sim_positions_file = _sim_path + _positions_filename
 _sim_transactions_file = _sim_path + _transactions_filename
@@ -163,6 +163,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
     curr_cash = start_cash
     prices, predictions = build_dictionaries(prediction_price_df)
     old_date = None
+    month_traded = False
 
     # main loop - daily
     for curr_date in sorted(predictions):
@@ -698,5 +699,5 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    an_end_date = datetime.datetime(2017, 11, 30)
+    an_end_date = datetime.datetime(2018, 2, 28)
     simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 14, 0.10, 0.0, rml.prediction_file)

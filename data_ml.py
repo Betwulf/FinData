@@ -9,11 +9,11 @@ _label_dir = "/data/labels/"
 _feature_dir = "/data/features/"
 _combined_features_filename = "features.csv"
 _combined_labels_filename = "labels.csv"
-_cwd = os.getcwd()
+_cwd = "C:/Temp/"
 _feature_path = _cwd + _feature_dir
 _label_path = _cwd + _label_dir
 _business_days_in_a_year = 252  # according to NYSE
-_forecast_days = 10  # numbers of days in the future to train on
+_forecast_days = 31  # numbers of days in the future to train on
 _forecast_buy_threshold = 2  # train for positive results above this percent return
 _forecast_sell_threshold = -2  # train for positive results below this percent return
 _forecast_slope = 0.2  # the steep climb from 0 to 1 as x approaches the threshold precentage
@@ -214,7 +214,10 @@ def calc_label_data():
 
 def get_sector_features(sectors_df):
     sector_list = sectors_df.sector.unique().tolist()
-    sector_list.remove('Failed')
+    try:
+        sector_list.remove('Failed')
+    except:
+        pass
     del sector_list[-1]
     sector_list.sort()
     sector_dict = {k: i for i, k in enumerate(sector_list)}
@@ -339,13 +342,7 @@ def calc_feature_data():
                               'stddev yr: {:1.3f} MA 60 day: {:1.3f}'.format(return_9_day, stddev_60,
                                                                              stddev_year, ma_60_day))
 
-                    new_values = [ticker, curr_date, return_1d, day_returns[-2], day_returns[-3], day_returns[-4],
-                                  day_returns[-5], day_returns[-6], day_returns[-7], day_returns[-8], day_returns[-9],
-                                  day_returns[-10], day_returns[-11], day_returns[-12], day_returns[-13], day_returns[-14],
-                                  day_returns[-15], day_returns[-16], day_returns[-17], day_returns[-18], day_returns[-19],
-                                  day_returns[-20], day_returns[-21], day_returns[-22], day_returns[-23], day_returns[-24],
-                                  day_returns[-25], day_returns[-26], day_returns[-27], day_returns[-28], day_returns[-29],
-                                  day_returns[-30], month_returns[-2], month_returns[-3], month_returns[-4],
+                    new_values = [ticker, curr_date, return_1d, month_returns[-2], month_returns[-3], month_returns[-4],
                                   month_returns[-5], month_returns[-6], month_returns[-7], month_returns[-8],
                                   month_returns[-9], month_returns[-10], month_returns[-11], year_return,
                                   volume_percent, volume_deviation, curr_year_high_pct, stddev_30, stddev_60, stddev_year,
@@ -398,11 +395,7 @@ def get_label_columns():
 def get_feature_columns():
     sectors_df = du.get_sectors()
     sector_list, sector_dict = get_sector_features(sectors_df)
-    return ['return_1d', 'return_2d', 'return_3d', 'return_4d', 'return_5d', 'return_6d',
-            'return_7d', 'return_8d', 'return_9d', 'return_10d', 'return_11d', 'return_12d', 'return_13d',
-            'return_14d', 'return_15d', 'return_16d', 'return_17d', 'return_18d', 'return_19d', 'return_20d',
-            'return_21d', 'return_22d', 'return_23d', 'return_24d', 'return_25d', 'return_26d', 'return_27d',
-            'return_28d', 'return_29d', 'return_30d', 'return_2m', 'return_3m', 'return_4m',
+    return ['return_1d', 'return_2m', 'return_3m', 'return_4m',
             'return_5m', 'return_6m', 'return_7m', 'return_8m',
             'return_9m', 'return_10m', 'return_11m', 'year_return',
             'volume_percent', 'volume_deviation', 'year_high_percent', 'stddev_30_day', 'stddev_60_day', 'stddev_year',

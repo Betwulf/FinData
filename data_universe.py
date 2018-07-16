@@ -17,7 +17,7 @@ _combined_filename = "__all.csv"
 wiki_prefix = 'WIKI/'
 iex_base_url = "https://api.iextrading.com/1.0/"
 
-_cwd = os.getcwd()
+_cwd = "C:/Temp/"
 _data_path = _cwd + _data_dir
 _price_path = _cwd + _price_dir
 _sector_path = _cwd + _sectors_dir
