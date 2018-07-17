@@ -167,6 +167,8 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
 
     # main loop - daily
     for curr_date in sorted(predictions):
+        if curr_date.day == 1:
+            month_traded = False
         curr_positions = {}
         day_prices = sorted(list(prices[curr_date].items()))
         day_predictions = sorted(list(predictions[curr_date].items()))
@@ -207,36 +209,38 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             new_position_count = len(new_buy_tickers)
         target_position_value = abs(current_total_value / max(new_position_count, 1))
 
-        # iterate through buys
-        for a_ticker in new_buy_tickers:
-            aprice = [item[1] for item in day_prices if item[0] == a_ticker][0]
-            prediction = [item[1] for item in day_predictions if item[0] == a_ticker][0]
-            quantity = target_position_value/aprice
-            new_pos = _new_position(model_file, a_ticker, curr_date, aprice, quantity,
-                                    target_position_value, 0)
-            total_cost = -target_position_value - trx_fee
-            curr_cash = curr_cash + total_cost
-            new_trx = _new_transaction(model_file, a_ticker, curr_date, aprice, quantity, trx_fee,
-                                       total_cost, prediction, True, False, False)
-            positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
-            transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
-            curr_positions[a_ticker] = new_pos
+        if not month_traded:
+            month_traded = True
+            # iterate through buys
+            for a_ticker in new_buy_tickers:
+                aprice = [item[1] for item in day_prices if item[0] == a_ticker][0]
+                prediction = [item[1] for item in day_predictions if item[0] == a_ticker][0]
+                quantity = target_position_value/aprice
+                new_pos = _new_position(model_file, a_ticker, curr_date, aprice, quantity,
+                                        target_position_value, 0)
+                total_cost = -target_position_value - trx_fee
+                curr_cash = curr_cash + total_cost
+                new_trx = _new_transaction(model_file, a_ticker, curr_date, aprice, quantity, trx_fee,
+                                           total_cost, prediction, True, False, False)
+                positions_df.loc[positions_df.shape[0]] = new_pos  # save for file later
+                transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
+                curr_positions[a_ticker] = new_pos
 
-        # iterate through sells
-        for a_ticker in new_sell_tickers:
-            day_price_item = [item[1] for item in day_prices if item[0] == a_ticker]
-            quantity, old_price = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == a_ticker][0]
-            if len(day_price_item) == 0:
-                print("WTF, no price? {}".format(a_ticker))
-                aprice = old_price
-            else:
-                aprice = day_price_item[0]
-            prediction = [item[1] for item in day_predictions if item[0] == a_ticker][0]
-            total_cost = quantity*aprice - trx_fee
-            curr_cash = curr_cash + total_cost
-            new_trx = _new_transaction(model_file, a_ticker, curr_date, aprice, -quantity, trx_fee,
-                                       total_cost, prediction, False, True, False)
-            transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
+            # iterate through sells
+            for a_ticker in new_sell_tickers:
+                day_price_item = [item[1] for item in day_prices if item[0] == a_ticker]
+                quantity, old_price = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == a_ticker][0]
+                if len(day_price_item) == 0:
+                    print("WTF, no price? {}".format(a_ticker))
+                    aprice = old_price
+                else:
+                    aprice = day_price_item[0]
+                prediction = [item[1] for item in day_predictions if item[0] == a_ticker][0]
+                total_cost = quantity*aprice - trx_fee
+                curr_cash = curr_cash + total_cost
+                new_trx = _new_transaction(model_file, a_ticker, curr_date, aprice, -quantity, trx_fee,
+                                           total_cost, prediction, False, True, False)
+                transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
 
         # sell abandoned positions
         for a_ticker in abandoned_tickers:
