@@ -16,7 +16,7 @@ _fundamental_dir = "/data/fundamental/"
 _combined_filename = "__all.csv"
 wiki_prefix = 'WIKI/'
 iex_base_url = "https://api.iextrading.com/1.0/"
-use_iex_prices = True
+
 
 _cwd = "C:/Temp/"
 _data_path = _cwd + _data_dir
@@ -49,11 +49,11 @@ def create_universe_from_json():
             f.write(x + '\n')
 
 
-def update_all_price_caches():
+def update_all_price_caches(use_iex_prices):
     """ Go through each ticker in the universe and either get beginning data or update latest data """
     snp_list = _get_tickerlist()
     for ticker in snp_list:
-        update_price_cache(ticker)
+        update_price_cache(ticker, use_iex_prices)
 
 
 def update_all_sector_caches():
@@ -96,7 +96,7 @@ def _get_tickerlist(remove_wiki=False, num_tickers=510):
     return snp_list[:num_tickers]
 
 
-def update_price_cache(ticker):
+def update_price_cache(ticker, use_iex_prices):
     """ Creates a set of monthly price files for the ticker """
 
     print(" --- ")
@@ -377,7 +377,7 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches()
+    update_all_price_caches(use_iex_prices=True)
     fin_data = get_all_prices()
     print(fin_data.describe())
     print('Total number of rows: {}'.format(len(fin_data)))
