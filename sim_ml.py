@@ -172,7 +172,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         buys, sells = threshold_function(list(zip(*day_predictions))[1], buy_threshold, sell_threshold)
 
         # calculate trade size
-        buy_tickers = [tick for (tick, picks) in sorted(day_predictions, key=lambda x:(-x[1], x[0]))][:10]
+        buy_tickers = [tick for (tick, picks) in sorted(day_predictions, key=lambda x:(-x[1], x[0]))][:20]
         sell_tickers = [t[0] for t, b in zip(day_predictions, sells) if b]
         buy_and_old_position_tickers = []
         new_position_tickers = []
