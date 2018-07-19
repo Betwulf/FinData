@@ -16,6 +16,7 @@ _fundamental_dir = "/data/fundamental/"
 _combined_filename = "__all.csv"
 wiki_prefix = 'WIKI/'
 iex_base_url = "https://api.iextrading.com/1.0/"
+use_iex_prices = True
 
 _cwd = "C:/Temp/"
 _data_path = _cwd + _data_dir
@@ -103,36 +104,72 @@ def update_price_cache(ticker):
     is_any, last_date, file_timestamp = _any_ticker_files(ticker)
     fin_data = None
     curr_day = datetime.datetime.today().replace(hour=0, minute=0, second=0)
-    try:
-        if not is_any:
-            print("New data for: " + ticker)
-            fin_data = quandl.get(ticker)
-        elif file_timestamp >= curr_day:
-            print("data for {} is up to date.".format(ticker))
-        else:
-            print("Update data for: " + ticker)
-            fin_data = quandl.get(ticker, start_date=last_date)
-    except:
-        pass
+    if use_iex_prices:
+        try:
+            if not is_any:
+                print("New data for: " + ticker)
+                iex_data = requests.get(iex_base_url + "stock/" + ticker + "/chart/5y", "").text
+                fin_data = pd.read_json(iex_data)
+            elif file_timestamp >= curr_day:
+                print("data for {} is up to date.".format(ticker))
+            else:
+                print("Update data for: " + ticker)
+                if (last_date.month + 5) < curr_day.month:
+                    print('THIS MAY FAIL, your data is really old, last date is: {}'.format(last_date))
+                # I wish i could specify a start and end date for the request
+                iex_data = requests.get(iex_base_url + "stock/" + ticker + "/chart/6m", "").text
+                fin_data = pd.read_json(iex_data)
+        except:
+            pass
 
-    if fin_data is not None:
-        fin_data.columns = [x.lower() for x in fin_data.columns]
-        unique_months = {(x.year, x.month) for x in fin_data.index}
-        print(fin_data.tail())
-        print("got {} months worth of data.".format(len(unique_months)))
-        # Add ticker to the data frame
-        fin_data['ticker'] = [ticker for _ in range(len(fin_data[fin_data.columns[0]]))]
-        for (year, month) in unique_months:
-            month_first, month_last = _get_day_range_for_month(year, month)
-            sub_data = fin_data[month_first:month_last]
-            # not sure if this date formatting will be reversible on load...
-            sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
-            sub_data.index.name = 'date'
-            # Don't want data before 1970 - timestamps don't work before then...
-            # But really... I don't want anything older than 2006 i reckon... vastly different trading behaviors
-            if year > 2006:
+        if fin_data is not None:
+            fin_data.columns = [x.lower() for x in fin_data.columns]
+            unique_months = {(x.year, x.month) for x in fin_data.date}
+            print(fin_data.tail())
+            print("got {} months worth of data.".format(len(unique_months)))
+            # Add ticker to the data frame
+            fin_data['ticker'] = [ticker for _ in range(len(fin_data[fin_data.columns[0]]))]
+            fin_data.index = fin_data.date
+            fin_data = fin_data.drop(['date', 'label'], 1)
+            for (year, month) in unique_months:
+                month_first, month_last = _get_day_range_for_month(year, month)
+                sub_data = fin_data[month_first:month_last]
+                # not sure if this date formatting will be reversible on load...
+                sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
+                sub_data.index.name = 'date'
                 with open(_create_filename(ticker, year, month), 'wt') as f:
-                        f.write(sub_data.to_csv())
+                    f.write(sub_data.to_csv())
+    else:  # Use Quandl (which no longer works after 3/28/2018
+        try:
+            if not is_any:
+                print("New data for: " + ticker)
+                fin_data = quandl.get(ticker)
+            elif file_timestamp >= curr_day:
+                print("data for {} is up to date.".format(ticker))
+            else:
+                print("Update data for: " + ticker)
+                fin_data = quandl.get(ticker, start_date=last_date)
+        except:
+            pass
+
+        if fin_data is not None:
+            fin_data.columns = [x.lower() for x in fin_data.columns]
+            unique_months = {(x.year, x.month) for x in fin_data.index}
+            print(fin_data.tail())
+            print("got {} months worth of data.".format(len(unique_months)))
+            # Add ticker to the data frame
+            fin_data['ticker'] = [ticker for _ in range(len(fin_data[fin_data.columns[0]]))]
+            for (year, month) in unique_months:
+                month_first, month_last = _get_day_range_for_month(year, month)
+                sub_data = fin_data[month_first:month_last]
+                # not sure if this date formatting will be reversible on load...
+                sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
+                sub_data.index.name = 'date'
+                # Don't want data before 1970 - timestamps don't work before then...
+                # But really... I don't want anything older than 2006 i reckon... vastly different trading behaviors
+                if year > 2006:
+                    with open(_create_filename(ticker, year, month), 'wt') as f:
+                            f.write(sub_data.to_csv())
 
 
 # TODO: Do we need this, or just use __all.csv ?
