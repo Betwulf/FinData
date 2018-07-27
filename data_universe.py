@@ -107,20 +107,21 @@ def update_price_cache(ticker, use_iex_prices):
     if use_iex_prices:
         try:
             if not is_any:
-                print("New data for: " + ticker)
+                print("IEX New data for: " + ticker)
                 iex_data = requests.get(iex_base_url + "stock/" + ticker + "/chart/5y", "").text
                 fin_data = pd.read_json(iex_data)
             elif file_timestamp >= curr_day:
                 print("data for {} is up to date.".format(ticker))
             else:
-                print("Update data for: " + ticker)
+                print("IEX Update data for: " + ticker)
                 if (last_date.month + 5) < curr_day.month:
                     print('THIS MAY FAIL, your data is really old, last date is: {}'.format(last_date))
                 # I wish i could specify a start and end date for the request
-                iex_data = requests.get(iex_base_url + "stock/" + ticker + "/chart/6m", "").text
+                iex_data = requests.get(iex_base_url + "stock/" + ticker[len(wiki_prefix):] + "/chart/6m", "").text
                 fin_data = pd.read_json(iex_data)
-        except:
-            pass
+        except (RuntimeError, TypeError, ValueError, NameError, IndexError) as ex:
+            print(ex)
+
 
         if fin_data is not None:
             fin_data.columns = [x.lower() for x in fin_data.columns]
@@ -142,12 +143,12 @@ def update_price_cache(ticker, use_iex_prices):
     else:  # Use Quandl (which no longer works after 3/28/2018
         try:
             if not is_any:
-                print("New data for: " + ticker)
+                print("Quandl New data for: " + ticker)
                 fin_data = quandl.get(ticker)
             elif file_timestamp >= curr_day:
                 print("data for {} is up to date.".format(ticker))
             else:
-                print("Update data for: " + ticker)
+                print("Quandl Update data for: " + ticker)
                 fin_data = quandl.get(ticker, start_date=last_date)
         except:
             pass
@@ -366,9 +367,9 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
-    update_all_sector_caches()
-    update_all_fundamental_data()
-    get_all_fundamental_data()
+    #update_all_sector_caches()
+    #update_all_fundamental_data()
+    #get_all_fundamental_data()
     # create_universe_from_json()
     api_key = ""
     if len(sys.argv) > 1:

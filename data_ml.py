@@ -241,6 +241,8 @@ def calc_feature_data():
             ema_12_column_name = "ema_12"
             ema_26_column_name = "ema_26"
             ema_12 = pd.ewma(sub_df['adj. close'], span=12)
+            # TODO: Test the below is like the above
+            ema_12_test = sub_df['adj. close'].ewm(ignore_na=False, span=12, adjust=True, min_periods=0).mean()
             ema_26 = pd.ewma(sub_df['adj. close'], span=26)
             sub_df[ema_12_column_name] = ema_12
             sub_df[ema_26_column_name] = ema_26

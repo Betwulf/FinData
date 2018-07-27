@@ -21,10 +21,10 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 nn_learning_rate = 0.0001
-epochs = 2000000  # 1600000
+epochs = 900000  # 1600000
 display_step = 20000  # 10000
 save_step = 100000  # 100000
-test_data_date = datetime.datetime(2016, 12, 31)
+test_data_date = datetime.datetime(2017, 6, 30)
 
 # Parameters for LSTM Shape
 layers_count = 10
@@ -439,7 +439,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     test_df = data_df[data_df.date >= test_data_date].copy()
     del data_df
     # TRAIN
-    ## training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
+    training_data_class = td.TrainingData(training_df, feature_series_count, feature_count, label_count)
     # TODO: switch rnn to use batch data, testing below
     # fff, lll, ddd = training_data_class.get_batch(3)
     ## train_rnn(training_data_class, _model_path, use_random_data)
