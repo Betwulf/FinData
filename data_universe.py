@@ -35,6 +35,7 @@ if not os.path.exists(_fundamental_path):
     os.makedirs(_fundamental_path)
 
 
+# TODO: splits between IEX and Quandl need to be managed
 def create_universe_from_json():
     """Creates the list file of tickers to use in the rest of the app provided a given source"""
     # snp_list = []
@@ -49,11 +50,11 @@ def create_universe_from_json():
             f.write(x + '\n')
 
 
-def update_all_price_caches(use_iex_prices):
+def update_all_price_caches(use_iex_prices, force_update=False):
     """ Go through each ticker in the universe and either get beginning data or update latest data """
     snp_list = _get_tickerlist()
     for ticker in snp_list:
-        update_price_cache(ticker, use_iex_prices)
+        update_price_cache(ticker, use_iex_prices, force_update)
 
 
 def update_all_sector_caches():
@@ -96,7 +97,18 @@ def _get_tickerlist(remove_wiki=False, num_tickers=510):
     return snp_list[:num_tickers]
 
 
-def update_price_cache(ticker, use_iex_prices):
+def _file_exists(a_filename):
+    previous_file_exists = False
+    try:
+        with open(a_filename, 'rt') as f:
+            f.close()
+            previous_file_exists = True
+    except IOError as ex:
+        pass
+    return previous_file_exists
+
+
+def update_price_cache(ticker, use_iex_prices, force_update=False):
     """ Creates a set of monthly price files for the ticker """
 
     print(" --- ")
@@ -110,7 +122,7 @@ def update_price_cache(ticker, use_iex_prices):
                 print("IEX New data for: " + ticker)
                 iex_data = requests.get(iex_base_url + "stock/" + ticker + "/chart/5y", "").text
                 fin_data = pd.read_json(iex_data)
-            elif file_timestamp >= curr_day:
+            elif (file_timestamp >= curr_day) and not force_update:
                 print("data for {} is up to date.".format(ticker))
             else:
                 print("IEX Update data for: " + ticker)
@@ -122,24 +134,36 @@ def update_price_cache(ticker, use_iex_prices):
         except (RuntimeError, TypeError, ValueError, NameError, IndexError) as ex:
             print(ex)
 
-
         if fin_data is not None:
             fin_data.columns = [x.lower() for x in fin_data.columns]
             unique_months = {(x.year, x.month) for x in fin_data.date}
             print(fin_data.tail())
-            print("got {} months worth of data.".format(len(unique_months)))
+            print(f"got {len(unique_months)} months worth of data.")
             # Add ticker to the data frame
             fin_data['ticker'] = [ticker for _ in range(len(fin_data[fin_data.columns[0]]))]
             fin_data.index = fin_data.date
-            fin_data = fin_data.drop(['date', 'label'], 1)
+            fin_data = fin_data.rename(columns={'close': 'adj. close', 'high': 'adj. high', 'low': 'adj. low',
+                                                'open': 'adj. open', 'volume': 'adj. volume'})
+            fin_data = fin_data.drop(['label', 'changeovertime', 'unadjustedvolume'], 1)
             for (year, month) in unique_months:
+                # check if previous file exists
+                the_filename = _create_filename(ticker, year, month)
+                previous_file_exists = _file_exists(the_filename)
+
+                # get this month's data
                 month_first, month_last = _get_day_range_for_month(year, month)
                 sub_data = fin_data[month_first:month_last]
-                # not sure if this date formatting will be reversible on load...
-                sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
-                sub_data.index.name = 'date'
-                with open(_create_filename(ticker, year, month), 'wt') as f:
-                    f.write(sub_data.to_csv())
+
+                # make sure we have full months of data
+                if previous_file_exists & (len(sub_data[sub_data['date'].dt.day == 1]) == 0):
+                    pass
+                else:
+                    # write the months data to disk
+                    sub_data = sub_data.drop(['date'], 1)
+                    sub_data.index = [x.strftime('%Y-%m-%d') for x in sub_data.index]
+                    sub_data.index.name = 'date'
+                    with open(the_filename, 'wt') as f:
+                        f.write(sub_data.to_csv())
     else:  # Use Quandl (which no longer works after 3/28/2018
         try:
             if not is_any:
@@ -150,8 +174,8 @@ def update_price_cache(ticker, use_iex_prices):
             else:
                 print("Quandl Update data for: " + ticker)
                 fin_data = quandl.get(ticker, start_date=last_date)
-        except:
-            pass
+        except (RuntimeError, TypeError, ValueError, NameError, IndexError) as ex:
+            print(ex)
 
         if fin_data is not None:
             fin_data.columns = [x.lower() for x in fin_data.columns]
@@ -187,7 +211,37 @@ def get_ticker_prices():
     return df_dict
 
 
-# TODO: Create a method to combine and store all prices for speed later on...
+def adjust_for_splits(df):
+    """ Need to look from today to back in time for differences bigger than 18% , not perfect but... """
+    ticker_set = {t for t in df['ticker']}
+    for ticker in ticker_set:
+        print(f' ------------ {ticker} ------------ ')
+        split_rate = -1
+        last_close = np.nan
+        sub_df = df[df.ticker == ticker]
+        sub_df.sort_values('date', ascending=False, inplace=True)
+        for i in range(len(sub_df)):
+            curr_date = sub_df['date'].iloc[i]
+            curr_close = sub_df['adj. close'].iloc[i]
+            curr_change = sub_df['change'].iloc[i]
+            print(f'{ticker} - {curr_date}   close: {curr_close} - chng: {curr_change}')
+            if split_rate > 0:
+                df[(df['ticker'] == ticker) & (df['date'] == curr_date)]['adj. close'] = curr_close*split_rate
+                print(f'        new close: {curr_close*split_rate}')
+            elif np.isnan(curr_change):
+                diff = last_close - curr_close
+                split_rate = round(abs(diff/curr_close), 2)
+                if split_rate > 0.18:
+                    print(f"OMG SPLITS FOUND. Diff: {diff}, split rate: {split_rate}")
+                    # then we have to apply the split through history
+                    df[(df['ticker'] == ticker) & (df['date'] == curr_date)]['adj. close'] = curr_close * split_rate
+                else:
+                    print(f"no splits found. Diff: {diff}")
+                    break
+            else:
+                last_close = curr_close - curr_change
+                print(f'                                                                  last_close = {last_close}')
+
 @timing
 def get_all_prices():
     """ This gets every single price for all securities in the universe - warning this could take some time... """
@@ -200,12 +254,12 @@ def get_all_prices():
         with open(_price_path + _combined_filename, 'rt') as f:
             all_data = pd.read_csv(f, index_col=0)
             return all_data
-    print('Reading raw price files...')
     counter = 0
     total_count = len(file_list)
+    print(f'Reading {total_count} raw price files...')
     for file_found in file_list:
         if (file_found != _price_path + _combined_filename) & file_found.endswith('.csv'):
-            if counter % int(total_count/20) == 0:
+            if counter % (total_count//20) == 0:
                 print("   {0:.0f}% done...".format((counter/total_count)*100))
             counter += 1
             with open(file_found, 'rt') as f:
@@ -216,6 +270,7 @@ def get_all_prices():
     # ttl_data['date'] = [index_date.strftime('%Y-%m-%d') for index_date in ttl_data.index]
     ttl_data.sort_values('date', inplace=True)
     ttl_data.reset_index(drop=True, inplace=True)
+    adjust_for_splits(ttl_data)
 
     # Save the file...
     with open(_price_path + _combined_filename, 'wt') as f:
@@ -255,7 +310,8 @@ def _any_ticker_files(ticker):
     old_date = last_date
     file_timestamp = datetime.datetime(1900, 1, 1)
     for file_found in file_list:
-        if (file_found.find(_combined_filename) == -1) & file_found.endswith('.csv'):
+        if (file_found.find(_combined_filename) == -1) & file_found.endswith('.csv') & \
+                (file_found[:4] == wiki_prefix[:4]):
             file_ticker, file_year, file_month = _parse_filename(file_found)
             if file_ticker == ticker:
                 file_date = datetime.date(file_year, file_month, 1)
@@ -309,6 +365,7 @@ def get_all_fundamental_data():
     return ttl_data
 
 
+# TODO: Switch to IEX for Fundamental data
 def update_all_fundamental_data():
     print("Updating Fundamental Data...")
     snp_list = _get_tickerlist(remove_wiki=True)
@@ -367,10 +424,10 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 
 if __name__ == '__main__':
-    #update_all_sector_caches()
-    #update_all_fundamental_data()
-    #get_all_fundamental_data()
     # create_universe_from_json()
+    # update_all_sector_caches()
+    # update_all_fundamental_data()
+    # get_all_fundamental_data()
     api_key = ""
     if len(sys.argv) > 1:
         api_key = sys.argv[1]
@@ -378,9 +435,9 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches(use_iex_prices=True)
-    fin_data = get_all_prices()
-    print(fin_data.describe())
-    print('Total number of rows: {}'.format(len(fin_data)))
+    update_all_price_caches(use_iex_prices=True, force_update=False)
+    price_list_all = get_all_prices()
+    print(price_list_all.describe())
+    print('Total number of rows: {}'.format(len(price_list_all)))
     print('Got data for the following tickers:')
-    print({t for t in fin_data['ticker']})
+    print({t for t in price_list_all['ticker']})

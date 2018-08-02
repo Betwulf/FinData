@@ -27,11 +27,6 @@
       "sector": "Energy"
     },
     {
-      "ticker": "SPY",
-      "description": "Spider SNP 500 ETF",
-      "sector": "Financials"
-    },
-    {
       "ticker": "MMM",
       "description": "3M|3M Company",
       "sector": "Industrials"
