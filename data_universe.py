@@ -144,7 +144,7 @@ def update_price_cache(ticker, use_iex_prices, force_update=False):
             fin_data.index = fin_data.date
             fin_data = fin_data.rename(columns={'close': 'adj. close', 'high': 'adj. high', 'low': 'adj. low',
                                                 'open': 'adj. open', 'volume': 'adj. volume'})
-            fin_data = fin_data.drop(['label', 'changeovertime', 'unadjustedvolume'], 1)
+            fin_data.drop(['label', 'changeovertime', 'unadjustedvolume'], axis=1, inplace=True)
             for (year, month) in unique_months:
                 # check if previous file exists
                 the_filename = _create_filename(ticker, year, month)
@@ -215,7 +215,7 @@ def adjust_for_splits(df):
     """ Need to look from today to back in time for differences bigger than 18% , not perfect but... """
     ticker_set = {t for t in df['ticker']}
     for ticker in ticker_set:
-        print(f' ------------ {ticker} ------------ ')
+        print(f' ------------ adjust for splits: {ticker} ------------ ')
         split_rate = -1
         last_close = np.nan
         sub_df = df[df.ticker == ticker]
@@ -223,24 +223,49 @@ def adjust_for_splits(df):
         for i in range(len(sub_df)):
             curr_date = sub_df['date'].iloc[i]
             curr_close = sub_df['adj. close'].iloc[i]
-            curr_change = sub_df['change'].iloc[i]
-            print(f'{ticker} - {curr_date}   close: {curr_close} - chng: {curr_change}')
+            if 'change' in sub_df.columns:
+                curr_change = sub_df['change'].iloc[i]
+            else:
+                curr_change = np.nan
+            # print(f'{ticker} - {curr_date}   close: {curr_close} - chng: {curr_change}')
             if split_rate > 0:
-                df[(df['ticker'] == ticker) & (df['date'] == curr_date)]['adj. close'] = curr_close*split_rate
-                print(f'        new close: {curr_close*split_rate}')
+                curr_open = sub_df['adj. open'].iloc[i]
+                curr_high = sub_df['adj. high'].iloc[i]
+                curr_low = sub_df['adj. low'].iloc[i]
+                curr_index = df[(df['ticker'] == ticker) & (df['date'] == curr_date)]['adj. close'].index.values[0]
+                df.at[curr_index, 'adj. close'] = curr_close * split_rate
+                df.at[curr_index, 'adj. open'] = curr_open * split_rate
+                df.at[curr_index, 'adj. high'] = curr_high * split_rate
+                df.at[curr_index, 'adj. low'] = curr_low * split_rate
+                # print(f'        new close: {df.at[curr_index, "adj. close"]}')
             elif np.isnan(curr_change):
                 diff = last_close - curr_close
                 split_rate = round(abs(diff/curr_close), 2)
                 if split_rate > 0.18:
-                    print(f"OMG SPLITS FOUND. Diff: {diff}, split rate: {split_rate}")
+                    print(f"OMG SPLITS FOUND. Diff: {diff}, split rate: {split_rate}, date: {curr_date}")
                     # then we have to apply the split through history
-                    df[(df['ticker'] == ticker) & (df['date'] == curr_date)]['adj. close'] = curr_close * split_rate
+                    curr_open = sub_df['adj. open'].iloc[i]
+                    curr_high = sub_df['adj. high'].iloc[i]
+                    curr_low = sub_df['adj. low'].iloc[i]
+                    curr_index = df[(df['ticker'] == ticker) & (df['date'] == curr_date)]['adj. close'].index.values[0]
+                    df.at[curr_index, 'adj. close'] = curr_close * split_rate
+                    df.at[curr_index, 'adj. open'] = curr_open * split_rate
+                    df.at[curr_index, 'adj. high'] = curr_high * split_rate
+                    df.at[curr_index, 'adj. low'] = curr_low * split_rate
+                    # print(f'        new close: {df.at[curr_index, "adj. close"]}')
                 else:
-                    print(f"no splits found. Diff: {diff}")
+                    # print(f"no splits found. Diff: {diff}")
                     break
             else:
                 last_close = curr_close - curr_change
-                print(f'                                                                  last_close = {last_close}')
+                # print(f'                                                                  last_close = {last_close}')
+
+
+def maybe_drop_columns(df, columns_list):
+    for x in columns_list:
+        if x in df.columns:
+            df.drop([x], axis=1, inplace=True)
+
 
 @timing
 def get_all_prices():
@@ -271,6 +296,8 @@ def get_all_prices():
     ttl_data.sort_values('date', inplace=True)
     ttl_data.reset_index(drop=True, inplace=True)
     adjust_for_splits(ttl_data)
+    maybe_drop_columns(ttl_data, ['high', 'open', 'low', 'close', 'ex-dividend', 'split ratio', 'volume', 'vwap',
+                                  'change', 'changepercent'])
 
     # Save the file...
     with open(_price_path + _combined_filename, 'wt') as f:
@@ -435,7 +462,7 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches(use_iex_prices=True, force_update=False)
+    update_all_price_caches(use_iex_prices=True, force_update=True)
     price_list_all = get_all_prices()
     print(price_list_all.describe())
     print('Total number of rows: {}'.format(len(price_list_all)))
