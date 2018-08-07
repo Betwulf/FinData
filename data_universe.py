@@ -469,7 +469,7 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches(use_iex_prices=True, force_update=False)
+    update_all_price_caches(use_iex_prices=True, force_update=True)
     price_list_all = get_all_prices()
     print(price_list_all.describe())
     print('Total number of rows: {}'.format(len(price_list_all)))

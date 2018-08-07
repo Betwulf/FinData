@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import data_universe as du
+import datetime
 from utils import timing
 
 
@@ -218,7 +219,6 @@ def get_sector_features(sectors_df):
         sector_list.remove('Failed')
     except:
         pass
-    del sector_list[-1]
     sector_list.sort()
     sector_dict = {k: i for i, k in enumerate(sector_list)}
     return sector_list, sector_dict
@@ -240,10 +240,8 @@ def calc_feature_data():
 
             ema_12_column_name = "ema_12"
             ema_26_column_name = "ema_26"
-            ema_12 = pd.ewma(sub_df['adj. close'], span=12)
-            # TODO: Test the below is like the above
-            ema_12_test = sub_df['adj. close'].ewm(ignore_na=False, span=12, adjust=True, min_periods=0).mean()
-            ema_26 = pd.ewma(sub_df['adj. close'], span=26)
+            ema_12 = sub_df['adj. close'].ewm(span=12, adjust=True, min_periods=0, ignore_na=False).mean()
+            ema_26 = sub_df['adj. close'].ewm(span=26, adjust=True, min_periods=0, ignore_na=False).mean()
             sub_df[ema_12_column_name] = ema_12
             sub_df[ema_26_column_name] = ema_26
 
@@ -258,6 +256,7 @@ def calc_feature_data():
                 # count the amount of year ranges available in the dataframe - eq. len(df) 253 means 2 ranges of 252
                 new_size = len(sub_df) - _business_days_in_a_year + 1
                 new_df = _create_feature_data_frame(new_size)
+                curr_date = sub_df.iloc[_business_days_in_a_year]['date']
                 for i in range(new_size):
                     start_loc = i
                     end_loc = _business_days_in_a_year + i
@@ -269,8 +268,15 @@ def calc_feature_data():
                     curr_row = year_df.iloc[-1]
                     prev_row = year_df.iloc[-2]
                     two_days_ago_row = year_df.iloc[-3]
+                    last_date = curr_date
                     curr_date = curr_row['date']
                     curr_close = curr_row['adj. close']
+
+                    # Date Check
+                    actual_curr_date = datetime.datetime.strptime(curr_date, '%Y-%m-%d')
+                    actual_last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
+                    if (actual_curr_date - actual_last_date).days > 10:
+                        raise Exception(f"{ticker} has gaps in their time series - {curr_date}")
 
                     # Fundamental Measures here - remember to unitize
                     roe = curr_row['roe']
