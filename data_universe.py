@@ -259,8 +259,8 @@ def adjust_for_splits(df):
                     df.at[curr_index, 'adj. low'] = curr_low * split_rate
                     # print(f'        new close: {df.at[curr_index, "adj. close"]}')
                 else:
-                    print(f"no splits found. Diff:  Diff: {diff}, split rate: {split_rate}, date: {curr_date}, "
-                          f"last_date: {last_date}")
+                    # print(f"no splits found. Diff:  Diff: {diff}, split rate: {split_rate}, date: {curr_date}, "
+                    #       f"last_date: {last_date}")
                     break
             else:
                 last_close = curr_close - curr_change
