@@ -218,6 +218,7 @@ def adjust_for_splits(df):
         print(f' ------------ adjust for splits: {ticker} ------------ ')
         split_rate = -1
         last_close = np.nan
+        last_date = datetime.datetime.today()
         sub_df = df[df.ticker == ticker]
         sub_df.sort_values('date', ascending=False, inplace=True)
         for i in range(len(sub_df)):
@@ -240,9 +241,13 @@ def adjust_for_splits(df):
                 # print(f'        new close: {df.at[curr_index, "adj. close"]}')
             elif np.isnan(curr_change):
                 diff = last_close - curr_close
-                split_rate = round(abs(diff/curr_close), 2)
-                if split_rate > 0.18:
-                    print(f"OMG SPLITS FOUND. Diff: {diff}, split rate: {split_rate}, date: {curr_date}")
+                split_rate = 1.0 - round(abs(diff/curr_close), 2)
+                actual_curr_date = datetime.datetime.strptime(curr_date, '%Y-%m-%d')
+                actual_last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
+                # IF the difference is big enough within a short amount of time, then its probably a split
+                if (split_rate > 0.18) & ((actual_last_date - actual_curr_date).days < 7):
+                    print(f"OMG SPLITS FOUND. Diff: {diff}, split rate: {split_rate}, date: {curr_date}, "
+                          f"last_date: {last_date}")
                     # then we have to apply the split through history
                     curr_open = sub_df['adj. open'].iloc[i]
                     curr_high = sub_df['adj. high'].iloc[i]
@@ -254,11 +259,13 @@ def adjust_for_splits(df):
                     df.at[curr_index, 'adj. low'] = curr_low * split_rate
                     # print(f'        new close: {df.at[curr_index, "adj. close"]}')
                 else:
-                    # print(f"no splits found. Diff: {diff}")
+                    print(f"no splits found. Diff:  Diff: {diff}, split rate: {split_rate}, date: {curr_date}, "
+                          f"last_date: {last_date}")
                     break
             else:
                 last_close = curr_close - curr_change
                 # print(f'                                                                  last_close = {last_close}')
+            last_date = curr_date
 
 
 def maybe_drop_columns(df, columns_list):
@@ -462,7 +469,7 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches(use_iex_prices=True, force_update=True)
+    update_all_price_caches(use_iex_prices=True, force_update=False)
     price_list_all = get_all_prices()
     print(price_list_all.describe())
     print('Total number of rows: {}'.format(len(price_list_all)))
