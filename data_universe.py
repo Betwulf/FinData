@@ -137,6 +137,8 @@ def update_price_cache(ticker, use_iex_prices, force_update=False):
         if fin_data is not None:
             fin_data.columns = [x.lower() for x in fin_data.columns]
             unique_months = {(x.year, x.month) for x in fin_data.date}
+            if use_iex_prices:
+                unique_months = unique_months[1:]  # the first month can be a partial month for IEX data
             print(fin_data.tail())
             print(f"got {len(unique_months)} months worth of data.")
             # Add ticker to the data frame
