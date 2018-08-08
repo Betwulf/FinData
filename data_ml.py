@@ -227,7 +227,7 @@ def get_sector_features(sectors_df):
 @timing
 def calc_feature_data():
     """ Generates ml data by calculating specific values off of daily prices """
-    print("Starting Calc feature data...")
+    print(" --------- CALCULATE FEATURE DATA ------------------")
     sectors_df = du.get_sectors()
     sector_list, sector_dict = get_sector_features(sectors_df)
     # for each ticker, sort and process calculated data for ml
@@ -339,16 +339,6 @@ def calc_feature_data():
                     macd_26 = np.asarray(year_df[ema_26_column_name][-9:])
                     macd_diff = macd_12 - macd_26
                     macd = (macd_diff[-1] - macd_diff.mean()) / curr_close
-
-                    # print out end of series data for debugging
-                    if i > (new_size-3):
-                        print('date: {} adj close: {:4.3f} - year high: {:3.2f} '
-                              'macd: {:1.3f}'.format(curr_date,
-                                                     curr_close, curr_year_high_pct, macd))
-                        print('   volume %: {:1.3f} volume stddev: {:1.3f} '.format(volume_percent, volume_deviation))
-                        print('   9 day rtn: {:1.3f} stddev 60: {:1.3f} '
-                              'stddev yr: {:1.3f} MA 60 day: {:1.3f}'.format(return_9_day, stddev_60,
-                                                                             stddev_year, ma_60_day))
 
                     new_values = [ticker, curr_date, return_1d, day_returns[-2], day_returns[-3], day_returns[-4],
                                  day_returns[-5], day_returns[-6], day_returns[-7], day_returns[-8], day_returns[-9],

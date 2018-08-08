@@ -218,7 +218,7 @@ def adjust_for_splits(df):
         print(f' ------------ adjust for splits: {ticker} ------------ ')
         split_rate = -1
         last_close = np.nan
-        last_date = datetime.datetime.today()
+        last_date = "1900-01-01"
         sub_df = df[df.ticker == ticker]
         sub_df.sort_values('date', ascending=False, inplace=True)
         for i in range(len(sub_df)):
@@ -241,11 +241,12 @@ def adjust_for_splits(df):
                 # print(f'        new close: {df.at[curr_index, "adj. close"]}')
             elif np.isnan(curr_change):
                 diff = last_close - curr_close
-                split_rate = 1.0 - round(abs(diff/curr_close), 2)
+                split_rate = round(abs(diff/curr_close), 2)
                 actual_curr_date = datetime.datetime.strptime(curr_date, '%Y-%m-%d')
                 actual_last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
                 # IF the difference is big enough within a short amount of time, then its probably a split
                 if (split_rate > 0.18) & ((actual_last_date - actual_curr_date).days < 7):
+                    split_rate = 1.0 - split_rate
                     print(f"OMG SPLITS FOUND. Diff: {diff}, split rate: {split_rate}, date: {curr_date}, "
                           f"last_date: {last_date}")
                     # then we have to apply the split through history
@@ -459,9 +460,9 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 if __name__ == '__main__':
     # create_universe_from_json()
-    # update_all_sector_caches()
-    # update_all_fundamental_data()
-    # get_all_fundamental_data()
+    update_all_sector_caches()
+    update_all_fundamental_data()
+    get_all_fundamental_data()
     api_key = ""
     if len(sys.argv) > 1:
         api_key = sys.argv[1]
@@ -469,7 +470,7 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches(use_iex_prices=True, force_update=True)
+    update_all_price_caches(use_iex_prices=False, force_update=False)
     price_list_all = get_all_prices()
     print(price_list_all.describe())
     print('Total number of rows: {}'.format(len(price_list_all)))
