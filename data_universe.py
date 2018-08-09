@@ -138,7 +138,9 @@ def update_price_cache(ticker, use_iex_prices, force_update=False):
             fin_data.columns = [x.lower() for x in fin_data.columns]
             unique_months = {(x.year, x.month) for x in fin_data.date}
             if use_iex_prices:
-                unique_months = unique_months[1:]  # the first month can be a partial month for IEX data
+                unique_months = list(unique_months)  # the first month can be a partial month for IEX data
+                unique_months.sort()
+                unique_months = unique_months[1:]
             print(fin_data.tail())
             print(f"got {len(unique_months)} months worth of data.")
             # Add ticker to the data frame
@@ -462,9 +464,9 @@ def update_fundamental_data(ticker, fundamental_file_list):
 
 if __name__ == '__main__':
     # create_universe_from_json()
-    update_all_sector_caches()
-    update_all_fundamental_data()
-    get_all_fundamental_data()
+    # update_all_sector_caches()
+    # update_all_fundamental_data()
+    # get_all_fundamental_data()
     api_key = ""
     if len(sys.argv) > 1:
         api_key = sys.argv[1]
@@ -472,7 +474,7 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches(use_iex_prices=False, force_update=False)
+    update_all_price_caches(use_iex_prices=True, force_update=True)
     price_list_all = get_all_prices()
     print(price_list_all.describe())
     print('Total number of rows: {}'.format(len(price_list_all)))
