@@ -249,7 +249,7 @@ def calc_feature_data():
             if int(percent_done*100) % 5 == 0:
                 print("   --- {0:0.0f}% DONE ---".format(percent_done * 100))
 
-            # check if we have enough history to calc year high / low
+            # check if we have enough history        to calc year high / low
             if len(sub_df) <= _business_days_in_a_year:
                 print('ticker {} does not have enough data to calc year high'.format(ticker))
             else:
