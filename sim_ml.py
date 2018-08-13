@@ -183,7 +183,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         current_total_value = 0
         if len(old_positions) > 0:
             current_total_value = sum(list(zip(*old_positions.values()))[5])  # get the total_values
-            print("date: {} \t value: {:7.2f}".format(old_date.strftime('%x'), current_total_value))
+            # print("date: {} \t value: {:7.2f}".format(old_date.strftime('%x'), current_total_value))
             # remove tickers we have already bought
             new_buy_tickers = list(set(buy_tickers) - set(old_positions.keys()))
             # add to sell tickers those that are too old, and no longer a buy
@@ -297,6 +297,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
     curr_positions['$'] = new_pos
 
     print(" --- Sim Complete --- ... time: {}".format(datetime.datetime.now().strftime('%X')))
+    print(f'Return: {(current_total_value/start_cash)-1.0:0.3}')
     print("latest buy signals: date: {}".format(curr_date.strftime('%x')))
     print(buy_tickers)
 
@@ -307,12 +308,6 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
     transactions_df['buy'] = transactions_df['buy'].astype(int)
     transactions_df['sell'] = transactions_df['sell'].astype(int)
     transactions_df['rebalance'] = transactions_df['rebalance'].astype(int)
-    print("positions: {}".format(len(positions_df)))
-    print(positions_df.describe())
-    print("transactions: {}".format(len(transactions_df)))
-    print(transactions_df.describe())
-    print("positions tail")
-    print(positions_df.tail())
     print("returns")
     print(returns_df.describe())
     with open(_sim_positions_file, 'wt', encoding='utf-8') as f:
@@ -633,7 +628,7 @@ def calculate_returns(transactions_df):
         ticker_buy_date = {}
         ticker_run_cost = {}
         ticker_buy_price = {}  # contains the price at the initial buy for pure return, not including rebalances
-        print("Starting model file: {}".format(model_file))
+        print("Calculating returns for: {}".format(model_file))
         model_transactions_df = transactions_df[transactions_df.model_file == model_file].copy()
         for index, row in model_transactions_df.iterrows():
             curr_date = row['date']
