@@ -117,11 +117,11 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
         # so adjust the days of the predictions to be applied to the next days' prices
         model_predictions_df['date'] = model_predictions_df['date'].apply(_add_a_day)
 
-        print("merging prices and predictions....")
+        # print("merging prices and predictions....")
         prediction_price_df = pd.merge(prices_df, model_predictions_df, how='inner', on=['date', 'ticker'])
         prediction_price_df = prediction_price_df[(start_date <= prediction_price_df.date) &
                                                   (prediction_price_df.date <= end_date)].copy()
-        print("ordering data by date....")
+        # print("ordering data by date....")
         prediction_price_df.sort_values('date', inplace=True)
         prediction_price_df.reset_index(drop=True, inplace=True)
 
@@ -310,11 +310,16 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
     transactions_df['rebalance'] = transactions_df['rebalance'].astype(int)
     print("returns")
     print(returns_df.describe())
-    with open(_sim_positions_file, 'wt', encoding='utf-8') as f:
+    dir_index = max(model_file.rfind(i) for i in "/\\") + 1
+    model_name = model_file[dir_index:]
+    pos_filename = _sim_path + model_name + '.' + _positions_filename
+    with open(pos_filename, 'wt', encoding='utf-8') as f:
         positions_df.to_csv(f)
-    with open(_sim_transactions_file, 'wt', encoding='utf-8') as f:
+    trx_filename = _sim_path + model_name + '.' + _transactions_filename
+    with open(trx_filename, 'wt', encoding='utf-8') as f:
         transactions_df.to_csv(f)
-    with open(_sim_returns_file, 'wt', encoding='utf-8') as f:
+    rtn_filename = _sim_path + model_name + '.' + _returns_filename
+    with open(rtn_filename, 'wt', encoding='utf-8') as f:
         returns_df.to_csv(f)
 
 

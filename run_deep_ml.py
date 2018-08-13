@@ -21,9 +21,9 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 nn_learning_rate = 0.0001
-epochs = 900000  # 1600000
-display_step = 20000  # 10000
-save_step = 100000  # 100000
+epochs = 800000
+display_step = 25000
+save_step = 50000
 test_data_date = datetime.datetime(2017, 6, 30)
 
 # Parameters for LSTM Shape
@@ -92,6 +92,10 @@ def build_rnn():
 def _get_rnn_model_files():
     # [_model_path + a_file for a_file in os.listdir(_model_path) if ".meta" in a_file]
     return [f for f in glob.glob(_model_path + "**/*.meta", recursive=True)]
+
+
+def _get_meta_prediction_files():
+    return [f for f in glob.glob(_model_path + "**/*.meta.csv", recursive=True)]
 
 
 def _name_model_file_from_path(path, steps):
@@ -446,6 +450,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
+    merge_predictions(_get_meta_prediction_files())
 
 
 def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file=None):
