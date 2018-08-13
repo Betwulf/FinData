@@ -172,7 +172,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
         buys, sells = threshold_function(list(zip(*day_predictions))[1], buy_threshold, sell_threshold)
 
         # calculate trade size
-        buy_tickers = [tick for (tick, picks) in sorted(day_predictions, key=lambda x:(-x[1], x[0]))][:20]
+        buy_tickers = [tick for (tick, picks) in sorted(day_predictions, key=lambda x:(-x[1], x[0]))][:10]
         sell_tickers = [t[0] for t, b in zip(day_predictions, sells) if b]
         buy_and_old_position_tickers = []
         new_position_tickers = []
@@ -698,5 +698,5 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    an_end_date = datetime.datetime(2018, 2, 28)
+    an_end_date = datetime.datetime(2018, 6, 26)
     simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 14, 0.10, 0.0, rml.prediction_file)
