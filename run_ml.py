@@ -7,6 +7,7 @@ import pandas as pd
 import data_ml as dml
 from utils import timing
 from utils import get_file_friendly_datetime_string
+from utils import merge_csv_files
 import tensorflow as tf
 from tensorflow.contrib import rnn
 import datetime

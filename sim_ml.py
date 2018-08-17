@@ -3,10 +3,12 @@ import math
 import numpy as np
 import data_ml as dml
 from utils import timing
+from utils import merge_csv_files
 import datetime
 import run_ml as rml
 import pandas as pd
 import data_universe as du
+import glob
 
 
 _sim_dir = "/sim/"
@@ -133,6 +135,13 @@ def simulate_all(start_cash, start_date, end_date, buy_threshold, sell_threshold
         if False:
             simulate_two_signals(model_file, start_cash, buy_threshold, sell_threshold, difference_threshold, sell_age,
                                  max_position_percent, trx_fee, prediction_price_df)
+    # merge all stat files
+    return_files = [f for f in glob.glob(_sim_path + "**/*.returns.csv", recursive=True)]
+    merge_csv_files(return_files, _sim_returns_file)
+    position_files = [f for f in glob.glob(_sim_path + "**/*.positions.csv", recursive=True)]
+    merge_csv_files(position_files, _sim_positions_file)
+    transaction_files = [f for f in glob.glob(_sim_path + "**/*.transactions.csv", recursive=True)]
+    merge_csv_files(transaction_files, _sim_transactions_file)
 
 
 # Build dictionaries for prices and predictions that are easier to use in set operations
@@ -698,5 +707,5 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    an_end_date = datetime.datetime(2018, 6, 26)
+    an_end_date = datetime.datetime(2018, 7, 6)
     simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 14, 0.10, 0.0, rml.prediction_file)

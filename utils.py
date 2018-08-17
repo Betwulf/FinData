@@ -18,3 +18,23 @@ def timing(f):
 
 def get_file_friendly_datetime_string():
     return datetime.datetime.now().strftime('%Y.%m.%d - %X').replace(':', '.')
+
+
+def merge_csv_files(csv_filename_list, merge_filename):
+    """ Merges multiple csv files into one, assumes there is a header row. """
+    file_out = open(merge_filename, "wt", encoding='utf-8')
+    try:
+        # first file:
+        for line in open(csv_filename_list[0], "rt", encoding='utf-8'):
+            file_out.write(line)
+        # now the rest:
+        for num in range(1, len(csv_filename_list)):
+            f = open(csv_filename_list[num], "rt", encoding='utf-8')
+            f.readline()  # skip the header
+            for line in f:
+                file_out.write(line)
+            f.close()  # not really needed
+    except ValueError as ve:
+        print(ve)
+    finally:
+        file_out.close()

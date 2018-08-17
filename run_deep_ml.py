@@ -7,8 +7,8 @@ import pandas as pd
 import data_ml as dml
 from utils import timing
 from utils import get_file_friendly_datetime_string
+from utils import merge_csv_files
 import tensorflow as tf
-from tensorflow.contrib import rnn
 import datetime
 import training_data as td
 
@@ -414,26 +414,7 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
         except ValueError as ve:
             print(ve)
     # GENERATE PREDICTION AGGREGATE FILE
-    merge_predictions(prediction_files)
-
-
-def merge_predictions(prediction_files):
-    file_out = open(prediction_file, "wt", encoding='utf-8')
-    try:
-        # first file:
-        for line in open(prediction_files[0], "rt", encoding='utf-8'):
-            file_out.write(line)
-        # now the rest:
-        for num in range(1, len(prediction_files) - 1):
-            f = open(prediction_files[num], "rt", encoding='utf-8')
-            f.readline()  # skip the header
-            for line in f:
-                file_out.write(line)
-            f.close()  # not really needed
-    except ValueError as ve:
-        print(ve)
-    finally:
-        file_out.close()
+    merge_csv_files(prediction_files, prediction_file)
 
 
 def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold, use_random_data):
@@ -450,7 +431,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
-    merge_predictions(_get_meta_prediction_files())
+    merge_csv_files(_get_meta_prediction_files(), prediction_file)
 
 
 def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file=None):
@@ -486,7 +467,7 @@ def get_data_and_test_all_tickers(test_epochs, test_display_step, buy_threshold,
         get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold, file)
     # merge predictions
     prediction_files = [f for f in glob.glob(_model_path + "**/*.csv", recursive=True)]
-    merge_predictions(prediction_files)
+    merge_csv_files(prediction_files, prediction_file)
 
 
 if __name__ == '__main__':
