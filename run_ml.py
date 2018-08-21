@@ -22,9 +22,9 @@ label_count = len(dml.get_label_columns())
 
 # TODO: Turn these into parameters for training
 learning_rate = 0.001
-epochs = 2000000  # 1600000
-display_step = 10000  # 10000
-save_step = 100000  # 100000
+epochs = 800000  # 1600000
+display_step = 25000  # 10000
+save_step = 50000  # 100000
 test_data_date = datetime.datetime(2016, 12, 31)
 
 # Parameters for LSTM Shape
@@ -54,6 +54,10 @@ if not os.path.exists(_prediction_path):
 
 def get_prediction_filename(a_model_file):
     return '{}{}'.format(a_model_file, '.csv')
+
+
+def _get_meta_prediction_files():
+    return [f for f in glob.glob(_model_path + "**/*.meta.csv", recursive=True)]
 
 
 def get_state_variables(batch_size, cell):
@@ -444,26 +448,7 @@ def train_and_test_by_ticker(test_epochs, test_display_step, buy_threshold, sell
         except ValueError as ve:
             print(ve)
     # GENERATE PREDICTION AGGREGATE FILE
-    merge_predictions(prediction_files)
-
-
-def merge_predictions(prediction_files):
-    file_out = open(prediction_file, "wt", encoding='utf-8')
-    try:
-        # first file:
-        for line in open(prediction_files[0], "rt", encoding='utf-8'):
-            file_out.write(line)
-        # now the rest:
-        for num in range(1, len(prediction_files) - 1):
-            f = open(prediction_files[num], "rt", encoding='utf-8')
-            f.readline()  # skip the header
-            for line in f:
-                file_out.write(line)
-            f.close()  # not really needed
-    except ValueError as ve:
-        print(ve)
-    finally:
-        file_out.close()
+    merge_csv_files(_get_meta_prediction_files(), prediction_file)
 
 
 def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold, use_random_data):
@@ -480,6 +465,7 @@ def get_data_train_and_test_rnn(test_epochs, test_display_step, buy_threshold, s
     # TEST
     testing_data_class = td.TrainingData(test_df, feature_series_count, feature_count, label_count)
     test_rnn(testing_data_class, test_epochs, test_display_step, buy_threshold, sell_threshold)
+    merge_csv_files(_get_meta_prediction_files(), prediction_file)
 
 
 def get_data_and_test_rnn(test_epochs, test_display_step, buy_threshold, sell_threshold, specific_file=None):
@@ -514,8 +500,7 @@ def get_data_and_test_all_tickers(test_epochs, test_display_step, buy_threshold,
     for file in meta_files:
         get_data_and_test_rnn_by_ticker(test_epochs, test_display_step, buy_threshold, sell_threshold, file)
     # merge predictions
-    prediction_files = [f for f in glob.glob(_model_path + "**/*.csv", recursive=True)]
-    merge_predictions(prediction_files)
+    merge_csv_files(_get_meta_prediction_files(), prediction_file)
 
 
 if __name__ == '__main__':

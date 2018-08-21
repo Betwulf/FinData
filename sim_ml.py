@@ -172,9 +172,14 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
     curr_cash = start_cash
     prices, predictions = build_dictionaries(prediction_price_df)
     old_date = None
+    curr_skip = 0
+    skip_val = 5
 
     # main loop - daily
     for curr_date in sorted(predictions):
+        curr_skip += 1
+        if not (curr_skip % skip_val == 0):
+            continue
         curr_positions = {}
         day_prices = sorted(list(prices[curr_date].items()))
         day_predictions = sorted(list(predictions[curr_date].items()))
@@ -707,5 +712,5 @@ def _get_position_columns():
 
 if __name__ == '__main__':
     a_start_date = rml.test_data_date
-    an_end_date = datetime.datetime(2018, 7, 6)
+    an_end_date = datetime.datetime(2018, 8, 6)
     simulate_all(100000.0, a_start_date, an_end_date, 0.52, 0.50, -1.4, 14, 0.10, 0.0, rml.prediction_file)
