@@ -504,6 +504,8 @@ def get_data_and_test_all_tickers(test_epochs, test_display_step, buy_threshold,
 
 
 if __name__ == '__main__':
+    predict_rnn(datetime.datetime(2018, 1, 1), ["C:/Temp//model/findata.250000.meta"])
+    api_key = sys.stdin.readline().replace('\n', '')
     if len(sys.argv) > 2:
         if sys.argv[1] == "testticker":
             get_data_and_test_rnn_by_ticker(200000, 200000, 0.6, 0.6, [str(sys.argv[2])])

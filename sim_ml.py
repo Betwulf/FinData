@@ -303,7 +303,7 @@ def _simulate_new(model_file, start_cash, buy_threshold, sell_threshold, differe
             quantity, aprice = [(q, pr) for mf, t, dt, pr, q, tv, age in old_positions.values() if t == a_ticker][0]
             curr_cash = curr_cash + quantity * aprice - trx_fee
             new_trx = _new_transaction(model_file, a_ticker, curr_date, aprice, quantity, trx_fee,
-                                       -quantity * aprice - trx_fee, prediction, False, True, False)
+                                       quantity * aprice - trx_fee, prediction, False, True, False)
             transactions_df.loc[transactions_df.shape[0]] = new_trx  # save for file later
     # add cash pos
     new_pos = _new_position(model_file, '$', curr_date, curr_cash, 1, curr_cash, 0)
