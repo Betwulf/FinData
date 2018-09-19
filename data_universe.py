@@ -120,7 +120,7 @@ def update_price_cache(ticker, use_iex_prices, force_update=False):
         try:
             if not is_any:
                 print("IEX New data for: " + ticker)
-                iex_data = requests.get(iex_base_url + "stock/" + ticker + "/chart/5y", "").text
+                iex_data = requests.get(iex_base_url + "stock/" + ticker[len(wiki_prefix):] + "/chart/5y", "").text
                 fin_data = pd.read_json(iex_data)
             elif (file_timestamp >= curr_day) and not force_update:
                 print("data for {} is up to date.".format(ticker))
@@ -474,7 +474,7 @@ if __name__ == '__main__':
         print("Please paste in your quandl api key:")
         api_key = sys.stdin.readline().replace('\n', '')
     quandl.ApiConfig.api_key = api_key
-    update_all_price_caches(use_iex_prices=True, force_update=True)
+    update_all_price_caches(use_iex_prices=True, force_update=False)
     price_list_all = get_all_prices()
     print(price_list_all.describe())
     print('Total number of rows: {}'.format(len(price_list_all)))
